@@ -45,7 +45,7 @@ bool PlayerbotAIConfig::Initialize()
 {
     LOG_INFO("server.loading", "Initializing AI Playerbots by ike3, based on the original Playerbots by blueboy");
 
-    enabled = sConfigMgr->GetOption<bool>("AiPlayerbot.Enabled", true);
+    enabled = sConfigMgr->GetOption<bool>("AiPlayerbot.Enabled", false);
     if (!enabled)
     {
         LOG_INFO("server.loading", "AI Playerbots is Disabled in aiplayerbot.conf");
