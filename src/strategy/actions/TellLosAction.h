@@ -21,4 +21,19 @@ class TellLosAction : public Action
         void ListGameObjects(std::string const title, GuidVector gos);
 };
 
+class TellAuraAction : public Action 
+{
+    public:
+        TellAuraAction(PlayerbotAI* ai) : Action(ai, "aura") {}
+        
+        virtual bool Execute(Event event);
+};
+
+class TellExpectedDpsAction : public Action 
+{
+    public:
+        TellExpectedDpsAction(PlayerbotAI* ai) : Action(ai, "tell expected dps") {}
+        
+        virtual bool Execute(Event event);
+};
 #endif

@@ -90,7 +90,7 @@ class StrategyContext : public NamedObjectContext<Strategy>
             creators["ranged"] = &StrategyContext::ranged;
             creators["behind"] = &StrategyContext::behind;
             creators["bg"] = &StrategyContext::bg;
-            creators["Battleground"] = &StrategyContext::Battleground;
+            creators["battleground"] = &StrategyContext::battleground;
             creators["warsong"] = &StrategyContext::warsong;
             creators["alterac"] = &StrategyContext::alterac;
             creators["arathi"] = &StrategyContext::arathi;
@@ -109,6 +109,7 @@ class StrategyContext : public NamedObjectContext<Strategy>
             creators["guild"] = &StrategyContext::guild;
             creators["grind"] = &StrategyContext::grind;
             creators["avoid aoe"] = &StrategyContext::avoid_aoe;
+            creators["move random"] = &StrategyContext::move_random;
         }
 
     private:
@@ -150,7 +151,7 @@ class StrategyContext : public NamedObjectContext<Strategy>
         static Strategy* possible_adds(PlayerbotAI* botAI) { return new PossibleAddsStrategy(botAI); }
         static Strategy* mount(PlayerbotAI* botAI) { return new MountStrategy(botAI); }
         static Strategy* bg(PlayerbotAI* botAI) { return new BGStrategy(botAI); }
-        static Strategy* Battleground(PlayerbotAI* botAI) { return new BattlegroundStrategy(botAI); }
+        static Strategy* battleground(PlayerbotAI* botAI) { return new BattlegroundStrategy(botAI); }
         static Strategy* warsong(PlayerbotAI* botAI) { return new WarsongStrategy(botAI); }
         static Strategy* alterac(PlayerbotAI* botAI) { return new AlteracStrategy(botAI); }
         static Strategy* arathi(PlayerbotAI* botAI) { return new ArathiStrategy(botAI); }
@@ -168,6 +169,7 @@ class StrategyContext : public NamedObjectContext<Strategy>
         static Strategy* guild (PlayerbotAI* botAI) { return new GuildStrategy(botAI); }
         static Strategy* grind(PlayerbotAI* botAI) { return new GrindingStrategy(botAI); }
         static Strategy* avoid_aoe(PlayerbotAI* botAI) { return new AvoidAoeStrategy(botAI); }
+        static Strategy* move_random(PlayerbotAI* ai) { return new MoveRandomStrategy(ai); }
 };
 
 class MovementStrategyContext : public NamedObjectContext<Strategy>
@@ -219,5 +221,7 @@ class QuestStrategyContext : public NamedObjectContext<Strategy>
         static Strategy* quest(PlayerbotAI* botAI) { return new DefaultQuestStrategy(botAI); }
         static Strategy* accept_all_quests(PlayerbotAI* botAI) { return new AcceptAllQuestsStrategy(botAI); }
 };
+
+
 
 #endif

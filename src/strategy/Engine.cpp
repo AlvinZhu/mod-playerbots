@@ -8,6 +8,7 @@
 #include "Queue.h"
 #include "PerformanceMonitor.h"
 #include "Playerbots.h"
+#include "Strategy.h"
 
 Engine::Engine(PlayerbotAI* botAI, AiObjectContext* factory) : PlayerbotAIAware(botAI), aiObjectContext(factory)
 {
@@ -69,6 +70,14 @@ ActionExecutionListeners::~ActionExecutionListeners()
 Engine::~Engine(void)
 {
     Reset();
+
+    // for (std::map<std::string, Strategy*>::iterator i = strategies.begin(); i != strategies.end(); i++)
+    // {
+    //     Strategy* strategy = i->second;
+    //     if (strategy) {
+    //         delete strategy;
+    //     }
+    // }
 
     strategies.clear();
 }
@@ -137,7 +146,8 @@ bool Engine::DoNextAction(Unit* unit, uint32 depth, bool minimal)
     time_t currentTime = time(nullptr);
     aiObjectContext->Update();
     ProcessTriggers(minimal);
-
+    PushDefaultActions();
+    
     uint32 iterations = 0;
     uint32 iterationsPerTick = queue.Size() * (minimal ? 2 : sPlayerbotAIConfig->iterationsPerTick);
     do
@@ -200,7 +210,7 @@ bool Engine::DoNextAction(Unit* unit, uint32 depth, bool minimal)
                     if (actionExecuted)
                     {
                         LogAction("A:%s - OK", action->getName().c_str());
-                        MultiplyAndPush(actionNode->getContinuers(), 0, false, event, "cont");
+                        MultiplyAndPush(actionNode->getContinuers(), relevance, false, event, "cont");
                         lastRelevance = relevance;
                         delete actionNode;
                         break;
@@ -256,14 +266,15 @@ bool Engine::DoNextAction(Unit* unit, uint32 depth, bool minimal)
     }
     while (basket && ++iterations <= iterationsPerTick);
 
-    if (!basket)
-    {
-        lastRelevance = 0.0f;
-        PushDefaultActions();
+    // if (!basket)
+    // {
+    //     lastRelevance = 0.0f;
+    //     PushDefaultActions();
 
-        if (queue.Peek() && depth < 2)
-            return DoNextAction(unit, depth + 1, minimal);
-    }
+    //     // prevent the delay after pushing default actions
+    //     if (queue.Peek() && depth < 1 && !minimal)
+    //         return DoNextAction(unit, depth + 1, minimal);
+    // }
 
     // MEMORY FIX TEST
     /*
@@ -458,7 +469,7 @@ bool Engine::HasStrategy(std::string const name)
 
 void Engine::ProcessTriggers(bool minimal)
 {
-    std::map<Trigger*, Event> fires;
+    std::unordered_map<Trigger*, Event> fires;
     for (std::vector<TriggerNode*>::iterator i = triggers.begin(); i != triggers.end(); i++)
     {
         TriggerNode* node = *i;
@@ -545,7 +556,7 @@ std::vector<std::string> Engine::GetStrategies()
         result.push_back(i->first);
     }
 
-    return std::move(result);
+    return result;
 }
 
 void Engine::PushAgain(ActionNode* actionNode, float relevance, Event event)
@@ -614,6 +625,10 @@ bool Engine::ListenAndExecute(Action* action, Event event)
 
 void Engine::LogAction(char const* format, ...)
 {
+    Player* bot = botAI->GetBot();
+    if (sPlayerbotAIConfig->logInGroupOnly && (!bot->GetGroup() || !botAI->HasRealPlayerMaster()) && !testMode)
+        return;
+
     char buf[1024];
 
     va_list ap;
@@ -633,17 +648,13 @@ void Engine::LogAction(char const* format, ...)
     if (testMode)
     {
         FILE* file = fopen("test.log", "a");
-        fprintf(file, "'{}'", buf);
+        fprintf(file, "'%s'", buf);
         fprintf(file, "\n");
         fclose(file);
     }
     else
     {
-        Player* bot = botAI->GetBot();
-        if (sPlayerbotAIConfig->logInGroupOnly && !bot->GetGroup())
-            return;
-
-        LOG_INFO("playerbots",  "{} {}", bot->GetName().c_str(), buf);
+        LOG_DEBUG("playerbots",  "{} {}", bot->GetName().c_str(), buf);
     }
 }
 
@@ -677,7 +688,7 @@ void Engine::LogValues()
         return;
 
     Player* bot = botAI->GetBot();
-    if (sPlayerbotAIConfig->logInGroupOnly && !bot->GetGroup())
+    if (sPlayerbotAIConfig->logInGroupOnly && (!bot->GetGroup() || !botAI->HasRealPlayerMaster()))
         return;
 
     std::string const text = botAI->GetAiObjectContext()->FormatValues();

@@ -12,19 +12,31 @@ class PlayerbotAI;
 BUFF_TRIGGER(HornOfWinterTrigger, "horn of winter");
 BUFF_TRIGGER(BoneShieldTrigger, "bone shield");
 BUFF_TRIGGER(ImprovedIcyTalonsTrigger, "improved icy talons");
-DEBUFF_TRIGGER(PlagueStrikeDebuffTrigger, "plague strike");
-DEBUFF_TRIGGER(IcyTouchDebuffTrigger, "icy touch");
-
-class PlagueStrikeDebuffOnAttackerTrigger : public DebuffOnAttackerTrigger
+// DEBUFF_CHECKISOWNER_TRIGGER(PlagueStrikeDebuffTrigger, "blood plague");
+class PlagueStrikeDebuffTrigger : public DebuffTrigger
 {
 	public:
-		PlagueStrikeDebuffOnAttackerTrigger(PlayerbotAI* botAI) : DebuffOnAttackerTrigger(botAI, "plague strike") { }
+		PlagueStrikeDebuffTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "blood plague", true, .0f) { }
 };
 
-class IcyTouchDebuffOnAttackerTrigger : public DebuffOnAttackerTrigger
+// DEBUFF_CHECKISOWNER_TRIGGER(IcyTouchDebuffTrigger, "frost fever");
+class IcyTouchDebuffTrigger : public DebuffTrigger
 {
 	public:
-		IcyTouchDebuffOnAttackerTrigger(PlayerbotAI* botAI) : DebuffOnAttackerTrigger(botAI, "icy touch") { }
+		IcyTouchDebuffTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "frost fever", true, .0f) { }
+};
+
+BUFF_TRIGGER(UnbreakableArmorTrigger, "unbreakable armor");
+class PlagueStrikeDebuffOnAttackerTrigger : public DebuffOnMeleeAttackerTrigger
+{
+	public:
+		PlagueStrikeDebuffOnAttackerTrigger(PlayerbotAI* botAI) : DebuffOnMeleeAttackerTrigger(botAI, "blood plague", true, .0f) { }
+};
+
+class IcyTouchDebuffOnAttackerTrigger : public DebuffOnMeleeAttackerTrigger
+{
+	public:
+		IcyTouchDebuffOnAttackerTrigger(PlayerbotAI* botAI) : DebuffOnMeleeAttackerTrigger(botAI, "frost fever", true, .0f) { }
 };
 
 class DKPresenceTrigger : public BuffTrigger
@@ -63,18 +75,19 @@ class PestilenceTrigger : public DebuffTrigger
 {
 	public:
 		PestilenceTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "pestilence") { }
+		virtual bool IsActive() override;
 };
 
 class BloodStrikeTrigger : public DebuffTrigger
 {
 	public:
-	    BloodStrikeTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "blood strike") { }
+	    BloodStrikeTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "blood strike", 1, true) { }
 };
 
 class HowlingBlastTrigger : public DebuffTrigger
 {
 	public:
-		HowlingBlastTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "howling blast") { }
+		HowlingBlastTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "howling blast", 1, true) { }
 };
 
 class MindFreezeInterruptSpellTrigger : public InterruptSpellTrigger
@@ -111,6 +124,19 @@ class StrangulateOnEnemyHealerTrigger : public InterruptEnemyHealerTrigger
 {
 	public:
 		StrangulateOnEnemyHealerTrigger(PlayerbotAI* botAI) : InterruptEnemyHealerTrigger(botAI, "strangulate") { }
+};
+
+class HighBloodRuneTrigger : public Trigger
+{
+	public:
+		HighBloodRuneTrigger(PlayerbotAI* botAI) : Trigger(botAI, "high blood rune") { }
+		bool IsActive() override;
+};
+
+class FreezingFogTrigger : public HasAuraTrigger
+{
+	public:
+		FreezingFogTrigger(PlayerbotAI* botAI) : HasAuraTrigger(botAI, "freezing fog") { }
 };
 
 #endif

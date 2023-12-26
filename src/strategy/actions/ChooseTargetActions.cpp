@@ -16,7 +16,7 @@ bool AttackEnemyPlayerAction::isUseful()
     if (bot->HasAura(23333) || bot->HasAura(23335) || bot->HasAura(34976))
         return false;
 
-    return !sPlayerbotAIConfig->IsInPvpProhibitedZone(bot->GetAreaId());
+    return !sPlayerbotAIConfig->IsPvpProhibited(bot->GetZoneId(), bot->GetAreaId());
 }
 
 bool AttackEnemyFlagCarrierAction::isUseful()
@@ -33,9 +33,12 @@ bool AttackAnythingAction::isUseful()
     if (!AI_VALUE(bool, "can move around"))
         return false;
 
-    if (context->GetValue<TravelTarget*>("travel target")->Get()->isTraveling() && ChooseRpgTargetAction::isFollowValid(bot, *context->GetValue<TravelTarget*>("travel target")->Get()->getPosition())) //Bot is traveling
+    if (context->GetValue<TravelTarget*>("travel target")->Get()->isTraveling() && 
+        ChooseRpgTargetAction::isFollowValid(bot, *context->GetValue<TravelTarget*>("travel target")->Get()->getPosition())) //Bot is traveling
         return false;
-
+    // if (bot->IsInCombat()) {
+    //     return false;
+    // }
     Unit* target = GetTarget();
 
     if (!target)
@@ -45,8 +48,8 @@ bool AttackAnythingAction::isUseful()
     if (!name.empty() && name.find("Dummy") != std::string::npos) // Target is not a targetdummy
         return false;
 
-    if (!ChooseRpgTargetAction::isFollowValid(bot, target))                               //Do not grind mobs far away from master.
-        return false;
+    // if (!ChooseRpgTargetAction::isFollowValid(bot, target))                               //Do not grind mobs far away from master.
+    //     return false;
 
     return true;
 }
@@ -61,30 +64,34 @@ bool DropTargetAction::Execute(Event event)
             context->GetValue<LootObjectStack*>("available loot")->Get()->Add(guid);
     }
 
-    ObjectGuid pullTarget = context->GetValue<ObjectGuid>("pull target")->Get();
-    GuidVector possible = botAI->GetAiObjectContext()->GetValue<GuidVector>("possible targets no los")->Get();
+    // ObjectGuid pullTarget = context->GetValue<ObjectGuid>("pull target")->Get();
+    // GuidVector possible = botAI->GetAiObjectContext()->GetValue<GuidVector>("possible targets no los")->Get();
 
-    if (pullTarget && find(possible.begin(), possible.end(), pullTarget) == possible.end())
-    {
-        context->GetValue<ObjectGuid>("pull target")->Set(ObjectGuid::Empty);
-    }
+    // if (pullTarget && find(possible.begin(), possible.end(), pullTarget) == possible.end())
+    // {
+    //     context->GetValue<ObjectGuid>("pull target")->Set(ObjectGuid::Empty);
+    // }
 
     context->GetValue<Unit*>("current target")->Set(nullptr);
 
     bot->SetTarget(ObjectGuid::Empty);
+    bot->SetSelection(ObjectGuid());
     botAI->ChangeEngine(BOT_STATE_NON_COMBAT);
     botAI->InterruptSpell();
     bot->AttackStop();
 
-    if (Pet* pet = bot->GetPet())
-    {
-        if (CreatureAI* creatureAI = ((Creature*)pet)->AI())
-        {
-            pet->SetReactState(REACT_PASSIVE);
-            pet->GetCharmInfo()->SetCommandState(COMMAND_FOLLOW);
-            pet->AttackStop();
-        }
-    }
+    // if (Pet* pet = bot->GetPet())
+    // {
+    //     if (CreatureAI* creatureAI = ((Creature*)pet)->AI())
+    //     {
+    //         pet->SetReactState(REACT_PASSIVE);
+    //         pet->GetCharmInfo()->SetCommandState(COMMAND_FOLLOW);
+    //         pet->GetCharmInfo()->SetIsCommandFollow(true);
+    //         pet->AttackStop();
+    //         pet->GetCharmInfo()->IsReturning();
+    //         pet->GetMotionMaster()->MoveFollow(bot, PET_FOLLOW_DIST, pet->GetFollowAngle());
+    //     }
+    // }
 
     return true;
 }
@@ -100,7 +107,7 @@ bool AttackAnythingAction::Execute(Event event)
             {
                 context->GetValue<ObjectGuid>("pull target")->Set(grindTarget->GetGUID());
                 bot->GetMotionMaster()->Clear();
-                bot->StopMoving();
+                // bot->StopMoving();
             }
         }
     }

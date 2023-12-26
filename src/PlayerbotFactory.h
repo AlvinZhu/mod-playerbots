@@ -6,9 +6,10 @@
 #define _PLAYERBOT_PLAYERBOTFACTORY_H
 
 #include "InventoryAction.h"
+#include "Player.h"
+#include "PlayerbotAI.h"
 
 class Item;
-class Player;
 
 struct ItemTemplate;
 
@@ -100,25 +101,33 @@ enum PriorizedConsumables
 
 #define MAX_CONSUM_ID 28
 
-class PlayerbotFactory : public InventoryAction
+class PlayerbotFactory
 {
     public:
-        PlayerbotFactory(Player* bot, uint32 level, uint32 itemQuality = 0);
+        PlayerbotFactory(Player* bot, uint32 level, uint32 itemQuality = 0, uint32 gearScoreLimit = 0);
 
         static ObjectGuid GetRandomBot();
         static void Init();
         void Refresh();
         void Randomize(bool incremental);
         static std::list<uint32> classQuestIds;
+        void ClearEverything();
         void InitSkills();
 
         static uint32 tradeSkills[];
-
+        static float CalculateItemScore(uint32 item_id, Player* bot);
+        void InitTalentsTree(bool incremental = false, bool use_template = true, bool reset = false);
+        void InitAvailableSpells();
+        void InitClassSpells();
+        void InitEquipment(bool incremental);
+        void InitPet();
+        void InitAmmo();
+        static uint32 CalcMixedGearScore(uint32 gs, uint32 quality);
+        void InitPetTalents();
     private:
         void Prepare();
-        void InitSecondEquipmentSet();
-        void InitEquipment(bool incremental);
-        void InitEquipmentNew(bool incremental);
+        // void InitSecondEquipmentSet();
+        // void InitEquipmentNew(bool incremental);
         bool CanEquipItem(ItemTemplate const* proto, uint32 desiredQuality);
         bool CanEquipUnseenItem(uint8 slot, uint16& dest, uint32 item);
         void InitTradeSkills();
@@ -127,20 +136,19 @@ class PlayerbotFactory : public InventoryAction
         void InitSpells();
         void ClearSpells();
         void ClearSkills();
-        void InitAvailableSpells();
         void InitSpecialSpells();
-        void InitTalentsTree(bool incremental);
         void InitTalents(uint32 specNo);
+        void InitTalentsByTemplate(uint32 specNo);
         void InitQuests(std::list<uint32>& questMap);
-        void InitPet();
+        void InitInstanceQuests();
         void ClearInventory();
         void ClearAllItems();
         void ResetQuests();
-        void InitAmmo();
         void InitMounts();
         void InitPotions();
         void InitFood();
         void InitReagents();
+        void InitGlyphs();
         bool CanEquipArmor(ItemTemplate const* proto);
         bool CanEquipWeapon(ItemTemplate const* proto);
         void EnchantItem(Item* item);
@@ -161,16 +169,25 @@ class PlayerbotFactory : public InventoryAction
         static void AddPrevQuests(uint32 questId, std::list<uint32>& questIds);
         void LoadEnchantContainer();
         void ApplyEnchantTemplate();
-        void ApplyEnchantTemplate(uint8 spec);
+        void ApplyEnchantTemplate(uint8 spec);  
+        std::vector<InventoryType> GetPossibleInventoryTypeListBySlot(EquipmentSlots slot);
+        static bool IsShieldTank(Player* bot);
+        static bool NotSameArmorType(uint32 item_subclass_armor, Player* bot);
+        void IterateItems(IterateItemsVisitor* visitor, IterateItemsMask mask = ITERATE_ITEMS_IN_BAGS);
+        void IterateItemsInBags(IterateItemsVisitor* visitor);
+        void IterateItemsInEquip(IterateItemsVisitor* visitor);
+        void IterateItemsInBank(IterateItemsVisitor* visitor);
         EnchantContainer::const_iterator GetEnchantContainerBegin() { return m_EnchantContainer.begin(); }
         EnchantContainer::const_iterator GetEnchantContainerEnd() { return m_EnchantContainer.end(); }
-
         uint32 level;
         uint32 itemQuality;
+        uint32 gearScoreLimit;
         static std::list<uint32> specialQuestIds;
-
+        std::vector<uint32> trainerIdCache;
     protected:
         EnchantContainer m_EnchantContainer;
+        Player* bot;
+        PlayerbotAI* botAI;
 };
 
 #endif

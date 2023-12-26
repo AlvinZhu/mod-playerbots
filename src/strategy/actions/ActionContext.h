@@ -57,6 +57,8 @@
 #include "XpGainAction.h"
 #include "VehicleActions.h"
 #include "WorldBuffAction.h"
+#include "RaidNaxxActions.h"
+#include "AutoTeleportForLevelAction.h"
 
 class PlayerbotAI;
 
@@ -83,6 +85,7 @@ class ActionContext : public NamedObjectContext<Action>
             creators["reach spell"] = &ActionContext::ReachSpell;
             creators["reach melee"] = &ActionContext::ReachMelee;
             creators["reach party member to heal"] = &ActionContext::reach_party_member_to_heal;
+            creators["reach party member to resurrect"] = &ActionContext::reach_party_member_to_resurrect;
             creators["flee"] = &ActionContext::flee;
             creators["flee with pet"] = &ActionContext::flee_with_pet;
             creators["gift of the naaru"] = &ActionContext::gift_of_the_naaru;
@@ -145,6 +148,7 @@ class ActionContext : public NamedObjectContext<Action>
             creators["war stomp"] = &ActionContext::war_stomp;
             creators["auto talents"] = &ActionContext::auto_talents;
             creators["auto learn spell"] = &ActionContext::auto_learn_spell;
+            creators["auto teleport for level"] = &ActionContext::auto_teleport_for_level;
             creators["xp gain"] = &ActionContext::xp_gain;
             creators["invite nearby"] = &ActionContext::invite_nearby;
             creators["invite guild"] = &ActionContext::invite_guild;
@@ -219,6 +223,10 @@ class ActionContext : public NamedObjectContext<Action>
             creators["rpg trade useful"] = &ActionContext::rpg_trade_useful;
             creators["rpg duel"] = &ActionContext::rpg_duel;
             creators["rpg mount anim"] = &ActionContext::rpg_mount_anim;
+
+            creators["toggle pet spell"] = &ActionContext::toggle_pet_spell;
+
+            
         }
 
     private:
@@ -252,6 +260,7 @@ class ActionContext : public NamedObjectContext<Action>
         static Action* ReachSpell(PlayerbotAI* botAI) { return new ReachSpellAction(botAI); }
         static Action* ReachMelee(PlayerbotAI* botAI) { return new ReachMeleeAction(botAI); }
         static Action* reach_party_member_to_heal(PlayerbotAI* botAI) { return new ReachPartyMemberToHealAction(botAI); }
+        static Action* reach_party_member_to_resurrect(PlayerbotAI* botAI) { return new ReachPartyMemberToResurrectAction(botAI); }
         static Action* flee(PlayerbotAI* botAI) { return new FleeAction(botAI); }
         static Action* flee_with_pet(PlayerbotAI* botAI) { return new FleeWithPetAction(botAI); }
         static Action* gift_of_the_naaru(PlayerbotAI* botAI) { return new CastGiftOfTheNaaruAction(botAI); }
@@ -303,6 +312,7 @@ class ActionContext : public NamedObjectContext<Action>
         static Action* war_stomp(PlayerbotAI* botAI) { return new CastWarStompAction(botAI); }
         static Action* auto_talents(PlayerbotAI* botAI) { return new AutoSetTalentsAction(botAI); }
         static Action* auto_learn_spell(PlayerbotAI* botAI) { return new AutoLearnSpellAction(botAI); }
+        static Action* auto_teleport_for_level(PlayerbotAI* botAI) { return new AutoTeleportForLevelAction(botAI); }
         static Action* xp_gain(PlayerbotAI* botAI) { return new XpGainAction(botAI); }
         static Action* invite_nearby(PlayerbotAI* botAI) { return new InviteNearbyToGroupAction(botAI); }
         static Action* invite_guild(PlayerbotAI* botAI) { return new InviteGuildToGroupAction(botAI); }
@@ -378,6 +388,10 @@ class ActionContext : public NamedObjectContext<Action>
         static Action* rpg_trade_useful(PlayerbotAI* botAI) { return new RpgTradeUsefulAction(botAI); }
         static Action* rpg_duel(PlayerbotAI* botAI) { return new RpgDuelAction(botAI); }
         static Action* rpg_mount_anim(PlayerbotAI* botAI) { return new RpgMountAnimAction(botAI); }
+
+        static Action* toggle_pet_spell(PlayerbotAI* ai) { return new TogglePetSpellAutoCastAction(ai); }
+
+        
 };
 
 #endif

@@ -68,6 +68,7 @@ class HunterTriggerFactoryInternal : public NamedObjectContext<Trigger>
             creators["aspect of the pack"] = &HunterTriggerFactoryInternal::aspect_of_the_pack;
             creators["rapid fire"] = &HunterTriggerFactoryInternal::rapid_fire;
             creators["aspect of the hawk"] = &HunterTriggerFactoryInternal::aspect_of_the_hawk;
+            creators["aspect of the monkey"] = &HunterTriggerFactoryInternal::aspect_of_the_monkey;
             creators["aspect of the wild"] = &HunterTriggerFactoryInternal::aspect_of_the_wild;
             creators["aspect of the viper"] = &HunterTriggerFactoryInternal::aspect_of_the_viper;
             creators["trueshot aura"] = &HunterTriggerFactoryInternal::trueshot_aura;
@@ -80,6 +81,8 @@ class HunterTriggerFactoryInternal : public NamedObjectContext<Trigger>
             creators["has ammo"] = &HunterTriggerFactoryInternal::has_ammo;
             creators["switch to melee"] = &HunterTriggerFactoryInternal::switch_to_melee;
             creators["switch to ranged"] = &HunterTriggerFactoryInternal::switch_to_ranged;
+            creators["misdirection on main tank"] = &HunterTriggerFactoryInternal::misdirection_on_main_tank;
+            creators["tranquilizing shot"] = &HunterTriggerFactoryInternal::remove_enrage;
         }
 
     private:
@@ -99,12 +102,15 @@ class HunterTriggerFactoryInternal : public NamedObjectContext<Trigger>
         static Trigger* aspect_of_the_pack(PlayerbotAI* botAI) { return new HunterAspectOfThePackTrigger(botAI); }
         static Trigger* rapid_fire(PlayerbotAI* botAI) { return new RapidFireTrigger(botAI); }
         static Trigger* aspect_of_the_hawk(PlayerbotAI* botAI) { return new HunterAspectOfTheHawkTrigger(botAI); }
+        static Trigger* aspect_of_the_monkey(PlayerbotAI* botAI) { return new HunterAspectOfTheMonkeyTrigger(botAI); }
         static Trigger* aspect_of_the_wild(PlayerbotAI* botAI) { return new HunterAspectOfTheWildTrigger(botAI); }
         static Trigger* low_ammo(PlayerbotAI* botAI) { return new HunterLowAmmoTrigger(botAI); }
         static Trigger* no_ammo(PlayerbotAI* botAI) { return new HunterNoAmmoTrigger(botAI); }
         static Trigger* has_ammo(PlayerbotAI* botAI) { return new HunterHasAmmoTrigger(botAI); }
         static Trigger* switch_to_melee(PlayerbotAI* botAI) { return new SwitchToMeleeTrigger(botAI); }
         static Trigger* switch_to_ranged(PlayerbotAI* botAI) { return new SwitchToRangedTrigger(botAI); }
+        static Trigger* misdirection_on_main_tank(PlayerbotAI* ai) { return new MisdirectionOnMainTankTrigger(ai); }
+        static Trigger* remove_enrage(PlayerbotAI* ai) { return new TargetRemoveEnrageTrigger(ai); }
 };
 
 class HunterAiObjectContextInternal : public NamedObjectContext<Action>
@@ -136,6 +142,7 @@ class HunterAiObjectContextInternal : public NamedObjectContext<Action>
             creators["boost"] = &HunterAiObjectContextInternal::rapid_fire;
             creators["readiness"] = &HunterAiObjectContextInternal::readiness;
             creators["aspect of the hawk"] = &HunterAiObjectContextInternal::aspect_of_the_hawk;
+            creators["aspect of the monkey"] = &HunterAiObjectContextInternal::aspect_of_the_monkey;
             creators["aspect of the wild"] = &HunterAiObjectContextInternal::aspect_of_the_wild;
             creators["aspect of the viper"] = &HunterAiObjectContextInternal::aspect_of_the_viper;
             creators["aspect of the pack"] = &HunterAiObjectContextInternal::aspect_of_the_pack;
@@ -144,10 +151,16 @@ class HunterAiObjectContextInternal : public NamedObjectContext<Action>
             creators["feign death"] = &HunterAiObjectContextInternal::feign_death;
             creators["wing clip"] = &HunterAiObjectContextInternal::wing_clip;
             creators["raptor strike"] = &HunterAiObjectContextInternal::raptor_strike;
+            creators["mongoose bite"] = &HunterAiObjectContextInternal::mongoose_bite;
             creators["feed pet"] = &HunterAiObjectContextInternal::feed_pet;
             creators["bestial wrath"] = &HunterAiObjectContextInternal::bestial_wrath;
             creators["scare beast"] = &HunterAiObjectContextInternal::scare_beast;
             creators["scare beast on cc"] = &HunterAiObjectContextInternal::scare_beast_on_cc;
+            creators["aspect of the dragonhawk"] = &HunterAiObjectContextInternal::aspect_of_the_dragonhawk;
+            creators["tranquilizing shot"] = &HunterAiObjectContextInternal::tranquilizing_shot;
+            creators["steady shot"] = &HunterAiObjectContextInternal::steady_shot;
+            creators["kill shot"] = &HunterAiObjectContextInternal::kill_shot;
+            creators["misdirection on main tank"] = &HunterAiObjectContextInternal::misdirection_on_main_tank;
         }
 
     private:
@@ -180,12 +193,19 @@ class HunterAiObjectContextInternal : public NamedObjectContext<Action>
         static Action* rapid_fire(PlayerbotAI* botAI) { return new CastRapidFireAction(botAI); }
         static Action* readiness(PlayerbotAI* botAI) { return new CastReadinessAction(botAI); }
         static Action* aspect_of_the_hawk(PlayerbotAI* botAI) { return new CastAspectOfTheHawkAction(botAI); }
+        static Action* aspect_of_the_monkey(PlayerbotAI* botAI) { return new CastAspectOfTheMonkeyAction(botAI); }
         static Action* aspect_of_the_wild(PlayerbotAI* botAI) { return new CastAspectOfTheWildAction(botAI); }
         static Action* aspect_of_the_viper(PlayerbotAI* botAI) { return new CastAspectOfTheViperAction(botAI); }
         static Action* aspect_of_the_pack(PlayerbotAI* botAI) { return new CastAspectOfThePackAction(botAI); }
         static Action* aspect_of_the_cheetah(PlayerbotAI* botAI) { return new CastAspectOfTheCheetahAction(botAI); }
         static Action* wing_clip(PlayerbotAI* botAI) { return new CastWingClipAction(botAI); }
         static Action* raptor_strike(PlayerbotAI* botAI) { return new CastRaptorStrikeAction(botAI); }
+        static Action* mongoose_bite(PlayerbotAI* botAI) { return new CastMongooseBiteAction(botAI); }
+        static Action* aspect_of_the_dragonhawk(PlayerbotAI* ai) { return new CastAspectOfTheDragonhawkAction(ai); }
+        static Action* tranquilizing_shot(PlayerbotAI* ai) { return new CastTranquilizingShotAction(ai); }
+        static Action* steady_shot(PlayerbotAI* ai) { return new CastSteadyShotAction(ai); }
+        static Action* kill_shot(PlayerbotAI* ai) { return new CastKillShotAction(ai); }
+        static Action* misdirection_on_main_tank(PlayerbotAI* ai) { return new CastMisdirectionOnMainTankAction(ai); }
 };
 
 HunterAiObjectContext::HunterAiObjectContext(PlayerbotAI* botAI) : AiObjectContext(botAI)

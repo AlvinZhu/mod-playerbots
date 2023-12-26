@@ -6,6 +6,7 @@
 #define _PLAYERBOT_MAGETRIGGERS_H
 
 #include "CureTriggers.h"
+#include "GenericTriggers.h"
 #include "SharedDefines.h"
 
 class PlayerbotAI;
@@ -16,7 +17,7 @@ DEFLECT_TRIGGER(FrostWardTrigger, "frost ward");
 class ArcaneIntellectOnPartyTrigger : public BuffOnPartyTrigger
 {
     public:
-        ArcaneIntellectOnPartyTrigger(PlayerbotAI* botAI) : BuffOnPartyTrigger(botAI, "arcane intellect", 2) { }
+        ArcaneIntellectOnPartyTrigger(PlayerbotAI* botAI) : BuffOnPartyTrigger(botAI, "arcane intellect", 2 * 2000) { }
 
         bool IsActive() override;
 };
@@ -24,7 +25,7 @@ class ArcaneIntellectOnPartyTrigger : public BuffOnPartyTrigger
 class ArcaneIntellectTrigger : public BuffTrigger
 {
     public:
-        ArcaneIntellectTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "arcane intellect", 2) { }
+        ArcaneIntellectTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "arcane intellect", 2 * 2000) { }
 
         bool IsActive() override;
 };
@@ -32,7 +33,7 @@ class ArcaneIntellectTrigger : public BuffTrigger
 class MageArmorTrigger : public BuffTrigger
 {
     public:
-        MageArmorTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "mage armor", 5) { }
+        MageArmorTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "mage armor", 5 * 2000) { }
 
         bool IsActive() override;
 };
@@ -40,19 +41,19 @@ class MageArmorTrigger : public BuffTrigger
 class LivingBombTrigger : public DebuffTrigger
 {
     public:
-        LivingBombTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "living bomb") { }
+        LivingBombTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "living bomb", 1, true) { }
 };
 
 class FireballTrigger : public DebuffTrigger
 {
     public:
-        FireballTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "fireball") { }
+        FireballTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "fireball", 1, true) { }
 };
 
 class PyroblastTrigger : public DebuffTrigger
 {
     public:
-        PyroblastTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "pyroblast") { }
+        PyroblastTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "pyroblast", 1, true) { }
 };
 
 class HotStreakTrigger : public HasAuraTrigger
@@ -131,6 +132,17 @@ class PresenceOfMindTrigger : public BuffTrigger
 {
     public:
         PresenceOfMindTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "presence of mind") { }
+};
+
+class ArcaneBlastStackTrigger : public HasAuraStackTrigger {
+public:
+    ArcaneBlastStackTrigger(PlayerbotAI* ai) : HasAuraStackTrigger(ai, "arcane blast", 3, 1) {}
+};
+
+class MirrorImageTrigger : public BoostTrigger 
+{
+    public:
+    MirrorImageTrigger(PlayerbotAI* ai) : BoostTrigger(ai, "mirror image") {}
 };
 
 #endif

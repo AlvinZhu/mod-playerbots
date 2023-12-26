@@ -6,7 +6,7 @@
 #include "Event.h"
 #include "Playerbots.h"
 
-void AcceptAllQuestsAction::ProcessQuest(Quest const* quest, WorldObject* questGiver)
+void AcceptAllQuestsAction::ProcessQuest(Quest const* quest, Object* questGiver)
 {
     AcceptQuest(quest, questGiver->GetGUID());
     bot->PlayDistanceSound(620);
@@ -88,6 +88,14 @@ bool AcceptQuestShareAction::Execute(Event event)
         return false;
 
     quest = qInfo->GetQuestId();
+
+    if (bot->HasQuest(quest))
+    {
+        bot->SetDivider(ObjectGuid::Empty);
+        botAI->TellError("I have this quest");
+        return false;
+    }
+
     if (!bot->CanTakeQuest(qInfo, false))
     {
         // can't take quest

@@ -24,10 +24,10 @@ bool SpellCastUsefulValue::Calculate()
 	}
 	else
 	{
-        uint32 lastSpellId = AI_VALUE(LastSpellCast&, "last spell cast").id;
-        if (spellid == lastSpellId)
-            if (Spell* const pSpell = bot->FindCurrentSpellBySpellId(lastSpellId))
-                return false;
+        // uint32 lastSpellId = AI_VALUE(LastSpellCast&, "last spell cast").id;
+        // if (spellid == lastSpellId)
+        //     if (Spell* const pSpell = bot->FindCurrentSpellBySpellId(lastSpellId))
+        //         return false;
 	}
 
     if (spellInfo->IsAutoRepeatRangedSpell() && bot->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL) && bot->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL)->m_spellInfo->Id == spellid)
@@ -40,7 +40,7 @@ bool SpellCastUsefulValue::Calculate()
         qualifier == "rockbiter weapon" || qualifier == "earthliving weapon" || qualifier == "spellstone")
     {
         if (Item* item = AI_VALUE2(Item*, "item for spell", spellid))
-            if (item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
+            if (item->IsInWorld() && item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
                 return false;
     }
 

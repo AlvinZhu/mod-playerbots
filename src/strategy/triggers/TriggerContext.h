@@ -16,6 +16,7 @@
 #include "StuckTriggers.h"
 #include "TravelTriggers.h"
 #include "NamedObjectContext.h"
+#include "RaidNaxxTriggers.h"
 
 class PlayerbotAI;
 
@@ -67,7 +68,7 @@ class TriggerContext : public NamedObjectContext<Trigger>
             creators["not dps target active"] = &TriggerContext::not_dps_target_active;
             creators["not dps aoe target active"] = &TriggerContext::not_dps_aoe_target_active;
             creators["has nearest adds"] = &TriggerContext::has_nearest_adds;
-            creators["enemy player inear"] = &TriggerContext::enemy_player_near;
+            creators["enemy player near"] = &TriggerContext::enemy_player_near;
 
             creators["tank assist"] = &TriggerContext::TankAssist;
             creators["lose aggro"] = &TriggerContext::LoseAggro;
@@ -90,13 +91,16 @@ class TriggerContext : public NamedObjectContext<Trigger>
             creators["party member to heal out of spell range"] = &TriggerContext::party_member_to_heal_out_of_spell_range;
 
             creators["combo points available"] = &TriggerContext::ComboPointsAvailable;
+            creators["combo points 3 available"] = &TriggerContext::ComboPoints3Available;
 
             creators["medium threat"] = &TriggerContext::MediumThreat;
 
             creators["dead"] = &TriggerContext::Dead;
             creators["corpse near"] = &TriggerContext::corpse_near;
             creators["party member dead"] = &TriggerContext::PartyMemberDead;
+            creators["combat party member dead"] = &TriggerContext::CombatPartyMemberDead;
             creators["no pet"] = &TriggerContext::no_pet;
+            creators["has pet"] = &TriggerContext::has_pet;
             creators["has attackers"] = &TriggerContext::has_attackers;
             creators["no possible targets"] = &TriggerContext::no_possible_targets;
             creators["possible adds"] = &TriggerContext::possible_adds;
@@ -118,6 +122,8 @@ class TriggerContext : public NamedObjectContext<Trigger>
             creators["critical aoe heal"] = &TriggerContext::critical_aoe_heal;
             creators["low aoe heal"] = &TriggerContext::low_aoe_heal;
             creators["medium aoe heal"] = &TriggerContext::medium_aoe_heal;
+            creators["group heal occasion"] = &TriggerContext::group_heal_occasion;
+            creators["medium group heal occasion"] = &TriggerContext::medium_group_heal_occasion;
             creators["invalid target"] = &TriggerContext::invalid_target;
             creators["lfg proposal active"] = &TriggerContext::lfg_proposal_active;
 
@@ -140,6 +146,7 @@ class TriggerContext : public NamedObjectContext<Trigger>
             creators["bg waiting"] = &TriggerContext::bg_waiting;
             creators["bg active"] = &TriggerContext::bg_active;
             creators["bg invite active"] = &TriggerContext::bg_invite_active;
+            creators["inside bg"] = &TriggerContext::inside_bg;
             creators["player has no flag"] = &TriggerContext::player_has_no_flag;
             creators["player has flag"] = &TriggerContext::player_has_flag;
             creators["team has flag"] = &TriggerContext::team_has_flag;
@@ -210,6 +217,8 @@ class TriggerContext : public NamedObjectContext<Trigger>
         static Trigger* critical_aoe_heal(PlayerbotAI* botAI) { return new AoeHealTrigger(botAI, "critical aoe heal", "critical", 2); }
         static Trigger* low_aoe_heal(PlayerbotAI* botAI) { return new AoeHealTrigger(botAI, "low aoe heal", "low", 2); }
         static Trigger* medium_aoe_heal(PlayerbotAI* botAI) { return new AoeHealTrigger(botAI, "medium aoe heal", "medium", 2); }
+        static Trigger* group_heal_occasion(PlayerbotAI* ai) { return new AoeInGroupTrigger(ai, "group heal occasion", "almost full", 0.6); }
+        static Trigger* medium_group_heal_occasion(PlayerbotAI* ai) { return new AoeInGroupTrigger(ai, "group heal occasion", "medium", 0.4); }
         static Trigger* target_changed(PlayerbotAI* botAI) { return new TargetChangedTrigger(botAI); }
         static Trigger* swimming(PlayerbotAI* botAI) { return new IsSwimmingTrigger(botAI); }
         static Trigger* no_possible_targets(PlayerbotAI* botAI) { return new NoPossibleTargetsTrigger(botAI); }
@@ -267,16 +276,19 @@ class TriggerContext : public NamedObjectContext<Trigger>
         static Trigger* enemy_is_close(PlayerbotAI* botAI) { return new EnemyIsCloseTrigger(botAI); }
         static Trigger* party_member_to_heal_out_of_spell_range(PlayerbotAI* botAI) { return new PartyMemberToHealOutOfSpellRangeTrigger(botAI); }
         static Trigger* ComboPointsAvailable(PlayerbotAI* botAI) { return new ComboPointsAvailableTrigger(botAI); }
+        static Trigger* ComboPoints3Available(PlayerbotAI* botAI) { return new ComboPointsAvailableTrigger(botAI, 3); }
         static Trigger* MediumThreat(PlayerbotAI* botAI) { return new MediumThreatTrigger(botAI); }
         static Trigger* Dead(PlayerbotAI* botAI) { return new DeadTrigger(botAI); }
         static Trigger* corpse_near(PlayerbotAI* botAI) { return new CorpseNearTrigger(botAI); }
         static Trigger* PartyMemberDead(PlayerbotAI* botAI) { return new PartyMemberDeadTrigger(botAI); }
+        static Trigger* CombatPartyMemberDead(PlayerbotAI* botAI) { return new CombatPartyMemberDeadTrigger(botAI); }
         static Trigger* PartyMemberLowHealth(PlayerbotAI* botAI) { return new PartyMemberLowHealthTrigger(botAI); }
         static Trigger* PartyMemberMediumHealth(PlayerbotAI* botAI) { return new PartyMemberMediumHealthTrigger(botAI); }
         static Trigger* PartyMemberAlmostFullHealth(PlayerbotAI* botAI) { return new PartyMemberAlmostFullHealthTrigger(botAI); }
         static Trigger* PartyMemberCriticalHealth(PlayerbotAI* botAI) { return new PartyMemberCriticalHealthTrigger(botAI); }
         static Trigger* protect_party_member(PlayerbotAI* botAI) { return new ProtectPartyMemberTrigger(botAI); }
         static Trigger* no_pet(PlayerbotAI* botAI) { return new NoPetTrigger(botAI); }
+        static Trigger* has_pet(PlayerbotAI* botAI) { return new HasPetTrigger(botAI); }
         static Trigger* has_attackers(PlayerbotAI* botAI) { return new HasAttackersTrigger(botAI); }
         static Trigger* random_bot_update_trigger(PlayerbotAI* botAI) { return new RandomBotUpdateTrigger(botAI); }
         static Trigger* no_non_bot_players_around(PlayerbotAI* botAI) { return new NoNonBotPlayersAroundTrigger(botAI); }
@@ -284,6 +296,7 @@ class TriggerContext : public NamedObjectContext<Trigger>
         static Trigger* bg_waiting(PlayerbotAI* botAI) { return new BgWaitingTrigger(botAI); }
         static Trigger* bg_active(PlayerbotAI* botAI) { return new BgActiveTrigger(botAI); }
         static Trigger* bg_invite_active(PlayerbotAI* botAI) { return new BgInviteActiveTrigger(botAI); }
+        static Trigger* inside_bg(PlayerbotAI* botAI) { return new InsideBGTrigger(botAI); }
         static Trigger* player_has_no_flag(PlayerbotAI* botAI) { return new PlayerHasNoFlag(botAI); }
         static Trigger* player_has_flag(PlayerbotAI* botAI) { return new PlayerHasFlag(botAI); }
         static Trigger* team_has_flag(PlayerbotAI* botAI) { return new TeamHasFlag(botAI); }
@@ -329,3 +342,4 @@ class TriggerContext : public NamedObjectContext<Trigger>
 };
 
 #endif
+

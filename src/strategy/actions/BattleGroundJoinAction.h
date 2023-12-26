@@ -43,7 +43,7 @@ class FreeBGJoinAction : public BGJoinAction
 class BGLeaveAction : public Action
 {
 public:
-        BGLeaveAction(PlayerbotAI* botAI, std::string const name = "bg leave") : Action(botAI) { }
+        BGLeaveAction(PlayerbotAI* botAI, std::string const name = "bg leave") : Action(botAI, name) { }
 
         bool Execute(Event event) override;
 };
@@ -66,4 +66,11 @@ class BGStatusCheckAction : public Action
         bool isUseful() override;
 };
 
+class BGStrategyCheckAction : public Action
+{
+    public:
+        BGStrategyCheckAction(PlayerbotAI* botAI, std::string const name = "bg strategy check") : Action(botAI, name) { }
+
+        bool Execute(Event event) override;
+};
 #endif

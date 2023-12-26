@@ -43,6 +43,7 @@ class PaladinResistanceStrategyFactoryInternal : public NamedObjectContext<Strat
             creators["rfire"] = &PaladinResistanceStrategyFactoryInternal::rfire;
             creators["baoe"] = &PaladinResistanceStrategyFactoryInternal::baoe;
             creators["barmor"] = &PaladinResistanceStrategyFactoryInternal::barmor;
+            creators["bcast"] = &PaladinResistanceStrategyFactoryInternal::bcast;
         }
 
     private:
@@ -51,6 +52,7 @@ class PaladinResistanceStrategyFactoryInternal : public NamedObjectContext<Strat
         static Strategy* rfire(PlayerbotAI* botAI) { return new PaladinFireResistanceStrategy(botAI); }
         static Strategy* baoe(PlayerbotAI* botAI) { return new PaladinBuffAoeStrategy(botAI); }
         static Strategy* barmor(PlayerbotAI* botAI) { return new PaladinBuffArmorStrategy(botAI); }
+        static Strategy* bcast(PlayerbotAI* botAI) { return new PaladinBuffCastStrategy(botAI); }
 };
 
 class PaladinBuffStrategyFactoryInternal : public NamedObjectContext<Strategy>
@@ -126,6 +128,14 @@ class PaladinTriggerFactoryInternal : public NamedObjectContext<Trigger>
             creators["repentance on enemy healer"] = &PaladinTriggerFactoryInternal::repentance_on_enemy_healer;
             creators["repentance on snare target"] = &PaladinTriggerFactoryInternal::repentance_on_snare_target;
             creators["repentance interrupt"] = &PaladinTriggerFactoryInternal::repentance_interrupt;
+            creators["beacon of light on main tank"] = &PaladinTriggerFactoryInternal::beacon_of_light_on_main_tank;
+            creators["sacred shield on main tank"] = &PaladinTriggerFactoryInternal::sacred_shield_on_main_tank;
+
+            creators["blessing of kings on party"] = &PaladinTriggerFactoryInternal::blessing_of_kings_on_party;
+            creators["blessing of wisdom on party"] = &PaladinTriggerFactoryInternal::blessing_of_wisdom_on_party;
+            creators["blessing of might on party"] = &PaladinTriggerFactoryInternal::blessing_of_might_on_party;
+
+            creators["avenging wrath"] = &PaladinTriggerFactoryInternal::avenging_wrath;
         }
 
     private:
@@ -163,6 +173,14 @@ class PaladinTriggerFactoryInternal : public NamedObjectContext<Trigger>
         static Trigger* repentance_on_enemy_healer(PlayerbotAI* botAI) { return new RepentanceOnHealerTrigger(botAI); }
         static Trigger* repentance_on_snare_target(PlayerbotAI* botAI) { return new RepentanceSnareTrigger(botAI); }
         static Trigger* repentance_interrupt(PlayerbotAI* botAI) { return new RepentanceInterruptTrigger(botAI); }
+        static Trigger* beacon_of_light_on_main_tank(PlayerbotAI* ai) { return new BeaconOfLightOnMainTankTrigger(ai); }
+        static Trigger* sacred_shield_on_main_tank(PlayerbotAI* ai) { return new SacredShieldOnMainTankTrigger(ai); }
+
+        static Trigger* blessing_of_kings_on_party(PlayerbotAI* botAI) { return new BlessingOfKingsOnPartyTrigger(botAI); }
+        static Trigger* blessing_of_wisdom_on_party(PlayerbotAI* botAI) { return new BlessingOfWisdomOnPartyTrigger(botAI); }
+        static Trigger* blessing_of_might_on_party(PlayerbotAI* botAI) { return new BlessingOfMightOnPartyTrigger(botAI); }
+
+        static Trigger* avenging_wrath(PlayerbotAI* botAI) { return new AvengingWrathTrigger(botAI); }
 };
 
 class PaladinAiObjectContextInternal : public NamedObjectContext<Action>
@@ -172,6 +190,7 @@ class PaladinAiObjectContextInternal : public NamedObjectContext<Action>
         {
             creators["seal of command"] = &PaladinAiObjectContextInternal::seal_of_command;
             creators["seal of vengeance"] = &PaladinAiObjectContextInternal::seal_of_vengeance;
+            creators["seal of corruption"] = &PaladinAiObjectContextInternal::seal_of_corruption;
             creators["blessing of might"] = &PaladinAiObjectContextInternal::blessing_of_might;
             creators["blessing of wisdom"] = &PaladinAiObjectContextInternal::blessing_of_wisdom;
             creators["blessing of kings"] = &PaladinAiObjectContextInternal::blessing_of_kings;
@@ -238,6 +257,11 @@ class PaladinAiObjectContextInternal : public NamedObjectContext<Action>
             creators["sanctity aura"] = &PaladinAiObjectContextInternal::sanctity_aura;
             creators["holy shock"] = &PaladinAiObjectContextInternal::holy_shock;
             creators["holy shock on party"] = &PaladinAiObjectContextInternal::holy_shock_on_party;
+            creators["divine plea"] = &PaladinAiObjectContextInternal::divine_plea;
+            creators["shield of righteousness"] = &PaladinAiObjectContextInternal::shield_of_righteousness;
+            creators["beacon of light on main tank"] = &PaladinAiObjectContextInternal::beacon_of_light_on_main_tank;
+            creators["sacred shield on main tank"] = &PaladinAiObjectContextInternal::sacred_shield_on_main_tank;
+            creators["avenging wrath"] = &PaladinAiObjectContextInternal::avenging_wrath;
         }
 
     private:
@@ -247,6 +271,7 @@ class PaladinAiObjectContextInternal : public NamedObjectContext<Action>
         static Action* righteous_fury(PlayerbotAI* botAI) { return new CastRighteousFuryAction(botAI); }
         static Action* seal_of_command(PlayerbotAI* botAI) { return new CastSealOfCommandAction(botAI); }
         static Action* seal_of_vengeance(PlayerbotAI* botAI) { return new CastSealOfVengeanceAction(botAI); }
+        static Action* seal_of_corruption(PlayerbotAI* botAI) { return new CastSealOfCorruptionAction(botAI); }
         static Action* blessing_of_sanctuary(PlayerbotAI* botAI) { return new CastBlessingOfSanctuaryAction(botAI); }
         static Action* blessing_of_might(PlayerbotAI* botAI) { return new CastBlessingOfMightAction(botAI); }
         static Action* blessing_of_wisdom(PlayerbotAI* botAI) { return new CastBlessingOfWisdomAction(botAI); }
@@ -309,6 +334,11 @@ class PaladinAiObjectContextInternal : public NamedObjectContext<Action>
         static Action* sanctity_aura(PlayerbotAI* botAI) { return new CastSanctityAuraAction(botAI); }
         static Action* holy_shock(PlayerbotAI* botAI) { return new CastHolyShockAction(botAI); }
         static Action* holy_shock_on_party(PlayerbotAI* botAI) { return new CastHolyShockOnPartyAction(botAI); }
+        static Action* divine_plea(PlayerbotAI* ai) { return new CastDivinePleaAction(ai); }
+        static Action* shield_of_righteousness(PlayerbotAI* ai) { return new ShieldOfRighteousnessAction(ai); }
+        static Action* beacon_of_light_on_main_tank(PlayerbotAI* ai) { return new CastBeaconOfLightOnMainTankAction(ai); }
+        static Action* sacred_shield_on_main_tank(PlayerbotAI* ai) { return new CastSacredShieldOnMainTankAction(ai); }
+        static Action* avenging_wrath(PlayerbotAI* ai) { return new CastAvengingWrathAction(ai); }
 };
 
 PaladinAiObjectContext::PaladinAiObjectContext(PlayerbotAI* botAI) : AiObjectContext(botAI)

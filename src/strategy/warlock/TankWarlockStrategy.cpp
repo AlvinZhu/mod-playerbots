@@ -13,6 +13,7 @@ class GenericWarlockStrategyActionNodeFactory : public NamedObjectFactory<Action
             creators["summon voidwalker"] = &summon_voidwalker;
             creators["summon felguard"] = &summon_felguard;
             creators["summon succubus"] = &summon_succubus;
+            creators["summon felhunter"] = &summon_felhunter;
         }
 
     private:
@@ -39,6 +40,14 @@ class GenericWarlockStrategyActionNodeFactory : public NamedObjectFactory<Action
                 /*A*/ NextAction::array(0, new NextAction("summon voidwalker"), nullptr),
                 /*C*/ nullptr);
         }
+
+        static ActionNode* summon_felhunter([[maybe_unused]] PlayerbotAI* botAI)
+        {
+            return new ActionNode("summon felhunter",
+                /*P*/ nullptr,
+                /*A*/ NextAction::array(0, new NextAction("summon imp"), nullptr),
+                /*C*/ nullptr);
+        }
 };
 
 TankWarlockStrategy::TankWarlockStrategy(PlayerbotAI* botAI) : GenericWarlockStrategy(botAI)
@@ -48,7 +57,7 @@ TankWarlockStrategy::TankWarlockStrategy(PlayerbotAI* botAI) : GenericWarlockStr
 
 NextAction** TankWarlockStrategy::getDefaultActions()
 {
-    return NextAction::array(0, new NextAction("shoot", 10.0f), nullptr);
+    return NextAction::array(0, new NextAction("shoot", ACTION_DEFAULT), nullptr);
 }
 
 void TankWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)

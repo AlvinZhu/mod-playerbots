@@ -8,13 +8,17 @@
 #include "Playerbots.h"
 #include "ServerFacade.h"
 #include "CreatureAI.h"
+#include "Unit.h"
 
 bool AttackAction::Execute(Event event)
 {
     Unit* target = GetTarget();
     if (!target)
         return false;
-
+    
+    if (!target->IsInWorld()) {
+        return false;
+    }
     return Attack(target);
 }
 
@@ -40,7 +44,7 @@ bool AttackMyTargetAction::Execute(Event event)
     return result;
 }
 
-bool AttackAction::Attack(Unit* target)
+bool AttackAction::Attack(Unit* target, bool with_pet /*true*/)
 {
     if (bot->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE || bot->HasUnitState(UNIT_STATE_IN_FLIGHT))
     {
@@ -93,31 +97,48 @@ bool AttackAction::Attack(Unit* target)
     }
 
     ObjectGuid guid = target->GetGUID();
-    bot->SetTarget(target->GetGUID());
+    bot->SetSelection(target->GetGUID());
 
     Unit* oldTarget = context->GetValue<Unit*>("current target")->Get();
     context->GetValue<Unit*>("old target")->Set(oldTarget);
 
     context->GetValue<Unit*>("current target")->Set(target);
     context->GetValue<LootObjectStack*>("available loot")->Get()->Add(guid);
+    
+    bool attacked = bot->Attack(target, true);
 
+    if (!attacked) {
+        return false;
+    }
+    /* prevent pet dead immediately in group */
+    if (bot->GetMap()->IsDungeon() && bot->GetGroup() && !target->IsInCombat()) {
+        with_pet = false;
+    }
     if (Pet* pet = bot->GetPet())
     {
-        if (CreatureAI* creatureAI = ((Creature*)pet)->AI())
-        {
+        if (with_pet) {
+            pet->SetReactState(REACT_DEFENSIVE);
+            pet->SetTarget(target->GetGUID());
+            pet->GetCharmInfo()->SetIsCommandAttack(true);
+            pet->AI()->AttackStart(target);
+            // pet->SetReactState(REACT_DEFENSIVE);
+        } else {
             pet->SetReactState(REACT_PASSIVE);
-            pet->GetCharmInfo()->SetCommandState(COMMAND_ATTACK);
-            creatureAI->AttackStart(target);
+            pet->GetCharmInfo()->SetIsCommandFollow(true);
+            pet->GetCharmInfo()->IsReturning();
+            // pet->GetMotionMaster()->MoveFollow(bot, PET_FOLLOW_DIST, pet->GetFollowAngle());
         }
     }
 
-    if (IsMovingAllowed() && !bot->HasInArc(CAST_ANGLE_IN_FRONT, target))
-        bot->SetFacingToObject(target);
+    if (IsMovingAllowed() && !bot->HasInArc(CAST_ANGLE_IN_FRONT, target)) {
+        sServerFacade->SetFacingTo(bot, target);
+    }
+        // bot->SetFacingToObject(target);
 
-    bool attacked = bot->Attack(target, !botAI->IsRanged(bot));
+    
     botAI->ChangeEngine(BOT_STATE_COMBAT);
 
-    return attacked;
+    return true;
 }
 
 bool AttackDuelOpponentAction::isUseful()

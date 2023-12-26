@@ -10,7 +10,7 @@ class FrostDKStrategyActionNodeFactory : public NamedObjectFactory<ActionNode>
     public:
 	    FrostDKStrategyActionNodeFactory()
 	    {
-		    //creators["icy touch"] = &icy_touch;
+		    creators["icy touch"] = &icy_touch;
 		    creators["obliterate"] = &obliterate;
 		    creators["howling blast"] = &howling_blast;
 		    creators["frost strike"] = &frost_strike;
@@ -23,18 +23,25 @@ class FrostDKStrategyActionNodeFactory : public NamedObjectFactory<ActionNode>
 		    //creators["deathchill"] = &deathchill;
 		    //creators["icebound fortitude"] = &icebound_fortitude;
 		    //creators["mind freeze"] = &mind_freeze;
-		    //creators["empower weapon"] = &empower_weapon;
 		    //creators["hungering cold"] = &hungering_cold;
 		    //creators["unbreakable armor"] = &unbreakable_armor;
 		    //creators["improved icy talons"] = &improved_icy_talons;
 	    }
 
 	private:
+		static ActionNode* icy_touch([[maybe_unused]] PlayerbotAI* botAI)
+		{
+		    return new ActionNode("icy touch",
+			    /*P*/ NextAction::array(0, new NextAction("blood presence"), nullptr),
+			    /*A*/ nullptr,
+			    /*C*/ nullptr);
+		}
+
 		static ActionNode* obliterate([[maybe_unused]] PlayerbotAI* botAI)
 		{
 		    return new ActionNode("obliterate",
 			    /*P*/ NextAction::array(0, new NextAction("blood presence"), nullptr),
-			    /*A*/ NextAction::array(0, new NextAction("frost strike"), nullptr),
+			    /*A*/ nullptr,
 			    /*C*/ nullptr);
 		}
 
@@ -58,7 +65,7 @@ class FrostDKStrategyActionNodeFactory : public NamedObjectFactory<ActionNode>
 		{
 		    return new ActionNode("howling blast",
 			    /*P*/ NextAction::array(0, new NextAction("blood presence"), nullptr),
-			    /*A*/ NextAction::array(0, new NextAction("icy touch"), nullptr),
+			    /*A*/ nullptr,
 			    /*C*/ nullptr);
 		}
 };
@@ -70,17 +77,28 @@ FrostDKStrategy::FrostDKStrategy(PlayerbotAI* botAI) : GenericDKStrategy(botAI)
 
 NextAction** FrostDKStrategy::getDefaultActions()
 {
-    return NextAction::array(0, new NextAction("melee", ACTION_NORMAL), new NextAction("frost strike", ACTION_NORMAL + 5), new NextAction("obliterate", ACTION_NORMAL + 4), nullptr);
+    return NextAction::array(0, 
+		new NextAction("obliterate", ACTION_DEFAULT + 0.5f), 
+		new NextAction("frost strike", ACTION_DEFAULT + 0.4f),
+		// new NextAction("death strike", ACTION_NORMAL + 3),
+		new NextAction("empower rune weapon", ACTION_DEFAULT + 0.2f),
+		new NextAction("horn of winter", ACTION_DEFAULT + 0.1f), 
+		new NextAction("melee", ACTION_DEFAULT), 
+		NULL
+	);
 }
 
 void FrostDKStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
 {
     GenericDKStrategy::InitTriggers(triggers);
-
-    triggers.push_back(new TriggerNode("empower weapon", NextAction::array(0, new NextAction("empower weapon", ACTION_NORMAL + 4), nullptr)));
+	triggers.push_back(new TriggerNode("unbreakable armor", NextAction::array(0, new NextAction("unbreakable armor", ACTION_NORMAL + 4), nullptr)));
+	triggers.push_back(new TriggerNode("high blood rune", NextAction::array(0, new NextAction("blood strike", ACTION_NORMAL + 1), nullptr)));
+	triggers.push_back(new TriggerNode("freezing fog", NextAction::array(0, new NextAction("howling blast", ACTION_HIGH + 1), nullptr)));
+	
+    // triggers.push_back(new TriggerNode("empower rune weapon", NextAction::array(0, new NextAction("empower rune weapon", ACTION_NORMAL + 4), nullptr)));
 }
 
 void FrostDKAoeStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
 {
-	triggers.push_back(new TriggerNode("light aoe", NextAction::array(0, new NextAction("howling blast", ACTION_NORMAL + 4), nullptr)));
+	triggers.push_back(new TriggerNode("medium aoe", NextAction::array(0, new NextAction("howling blast", ACTION_HIGH + 4), nullptr)));
 }

@@ -35,7 +35,9 @@ class PlayerbotAIConfig
         bool Initialize();
         bool IsInRandomAccountList(uint32 id);
         bool IsInRandomQuestItemList(uint32 id);
+        bool IsPvpProhibited(uint32 zoneId, uint32 areaId);
         bool IsInPvpProhibitedZone(uint32 id);
+        bool IsInPvpProhibitedArea(uint32 id);
 
         bool enabled;
         bool allowGuildBots;
@@ -51,6 +53,7 @@ class PlayerbotAIConfig
         bool randomBotAutologin;
         bool botAutologin;
         std::string randomBotMapsAsString;
+        float probTeleToBankers;
         std::vector<uint32> randomBotMaps;
         std::vector<uint32> randomBotQuestItems;
         std::vector<uint32> randomBotAccounts;
@@ -66,6 +69,8 @@ class PlayerbotAIConfig
         uint32 minRandomBotRandomizeTime, maxRandomBotRandomizeTime;
         uint32 minRandomBotChangeStrategyTime, maxRandomBotChangeStrategyTime;
         uint32 minRandomBotReviveTime, maxRandomBotReviveTime;
+        uint32 minRandomBotTeleportInterval, maxRandomBotTeleportInterval;
+        uint32 randomBotInWorldWithRotaionDisabled;
         uint32 minRandomBotPvpTime, maxRandomBotPvpTime;
         uint32 randomBotsPerInterval;
         uint32 minRandomBotsPriceChangeInterval, maxRandomBotsPriceChangeInterval;
@@ -75,7 +80,7 @@ class PlayerbotAIConfig
         bool randomBotJoinBG;
         bool randomBotAutoJoinBG;
         bool randomBotLoginAtStartup;
-        uint32 randomBotTeleLevel;
+        uint32 randomBotTeleLowerLevel, randomBotTeleHigherLevel;
         bool logInGroupOnly, logValuesPerTick;
         bool fleeingEnabled;
         bool summonAtInnkeepersEnabled;
@@ -84,6 +89,9 @@ class PlayerbotAIConfig
         uint32 randomBotMinLevel, randomBotMaxLevel;
         float randomChangeMultiplier;
         uint32 specProbability[MAX_CLASSES][10];
+        // [(tab, row, col, level)]
+        std::vector<std::vector<uint32>> defaultTalentsOrder[MAX_CLASSES][3];
+        std::vector<std::vector<uint32>> defaultTalentsOrderLowLevel[MAX_CLASSES][3];
         std::string premadeLevelSpec[MAX_CLASSES][10][91]; //lvl 10 - 100
         ClassSpecs classSpecs[MAX_CLASSES];
         std::string commandPrefix, commandSeparator;
@@ -95,11 +103,14 @@ class PlayerbotAIConfig
         bool deleteRandomBotGuilds;
         std::vector<uint32> randomBotGuilds;
         std::vector<uint32> pvpProhibitedZoneIds;
+        std::vector<uint32> pvpProhibitedAreaIds;
 
         bool randombotsWalkingRPG;
         bool randombotsWalkingRPGInDoors;
         uint32 minEnchantingBotLevel;
         uint32 randombotStartingLevel;
+        bool enableRotation;
+        uint32 rotationPoolSize;
         bool gearscorecheck;
         bool randomBotPreQuests;
 
@@ -134,23 +145,28 @@ class PlayerbotAIConfig
         bool perfMonEnabled;
 
         bool enableGreet;
+        bool summonWhenGroup;
         bool randomBotShowHelmet;
         bool randomBotShowCloak;
         bool disableRandomLevels;
         uint32 playerbotsXPrate;
         uint32 botActiveAlone;
 
+        bool freeMethodLoot;
         std::string autoPickReward;
         bool autoEquipUpgradeLoot;
+        float equipUpgradeThreshold;
         bool syncQuestWithPlayer;
         bool syncQuestForPlayer;
         std::string autoTrainSpells;
-        std::string autoPickTalents;
+        bool autoPickTalents;
+        bool autoUpgradeEquip;
         bool autoLearnTrainerSpells;
         bool autoDoQuests;
         bool syncLevelWithPlayers;
         bool freeFood;
         bool autoLearnQuestSpells;
+        bool autoTeleportForLevel;
         bool randomBotSayWithoutMaster;
         bool randomBotGroupNearby;
         uint32 tweakValue; //Debugging config
@@ -160,6 +176,14 @@ class PlayerbotAIConfig
         std::vector<uint32> randomBotArenaTeams;
 
         uint32 selfBotLevel;
+        bool downgradeMaxLevelBot;
+        bool equipmentPersistence;
+        int32 equipmentPersistenceLevel;
+        int32 groupInvitationPermission;
+        int32 botReviveWhenSummon;
+        bool autoInitOnly;
+        float autoInitEquipLevelLimitRatio;
+        int32 addClassCommand;
 
         std::string const GetTimestampStr();
         bool hasLog(std::string const fileName) { return std::find(allowedLogFiles.begin(), allowedLogFiles.end(), fileName) != allowedLogFiles.end(); };
@@ -168,7 +192,8 @@ class PlayerbotAIConfig
         void log(std::string const fileName, const char* str, ...);
 
         void loadWorldBuf(uint32 factionId, uint32 classId, uint32 minLevel, uint32 maxLevel);
-
+    private:
+        std::vector<std::vector<uint32>> ParseTempTalentsOrder(uint32 cls, std::string temp_talents_order);
 };
 
 #define sPlayerbotAIConfig PlayerbotAIConfig::instance()

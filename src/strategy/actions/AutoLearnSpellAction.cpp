@@ -4,6 +4,7 @@
 
 #include "AutoLearnSpellAction.h"
 #include "Event.h"
+#include "PlayerbotFactory.h"
 #include "Playerbots.h"
 
 bool AutoLearnSpellAction::Execute(Event event)
@@ -30,66 +31,83 @@ bool AutoLearnSpellAction::Execute(Event event)
 
 void AutoLearnSpellAction::LearnSpells(std::ostringstream* out)
 {
-    if (sPlayerbotAIConfig->autoLearnTrainerSpells)// || (!botAI->GetMaster() && sRandomPlayerbotMgr->IsRandomBot(bot)))
+    if (sPlayerbotAIConfig->autoLearnTrainerSpells && sRandomPlayerbotMgr->IsRandomBot(bot))// || (!botAI->GetMaster() && sRandomPlayerbotMgr->IsRandomBot(bot)))
         LearnTrainerSpells(out);
 
-    if (sPlayerbotAIConfig->autoLearnQuestSpells)// || (!botAI->GetMaster() && sRandomPlayerbotMgr->IsRandomBot(bot)))
+    if (sPlayerbotAIConfig->autoLearnQuestSpells && sRandomPlayerbotMgr->IsRandomBot(bot))// || (!botAI->GetMaster() && sRandomPlayerbotMgr->IsRandomBot(bot)))
         LearnQuestSpells(out);
 }
 
 void AutoLearnSpellAction::LearnTrainerSpells(std::ostringstream* out)
 {
-    bot->LearnDefaultSkills();
-    bot->LearnCustomSpells();
+    PlayerbotFactory factory(bot, bot->GetLevel());
+    factory.InitClassSpells();
+    factory.InitAvailableSpells();
+    factory.InitSkills();
+    factory.InitPet();
+    // bot->LearnDefaultSkills();
 
-    CreatureTemplateContainer const* creatures = sObjectMgr->GetCreatureTemplates();
-    for (CreatureTemplateContainer::const_iterator itr = creatures->begin(); itr != creatures->end(); ++itr)
-    {
-        if (itr->second.trainer_type != TRAINER_TYPE_CLASS && itr->second.trainer_type != TRAINER_TYPE_TRADESKILLS)
-            continue;
+    // CreatureTemplateContainer const* creatureTemplateContainer = sObjectMgr->GetCreatureTemplates();
+    // for (CreatureTemplateContainer::const_iterator i = creatureTemplateContainer->begin(); i != creatureTemplateContainer->end(); ++i)
+    // {
+    //     CreatureTemplate const& co = i->second;
+    //     if (co.trainer_type != TRAINER_TYPE_TRADESKILLS && co.trainer_type != TRAINER_TYPE_CLASS)
+    //         continue;
 
-        if (itr->second.trainer_type == TRAINER_TYPE_CLASS && itr->second.trainer_class != bot->getClass())
-            continue;
+    //     if (co.trainer_type == TRAINER_TYPE_CLASS && co.trainer_class != bot->getClass())
+    //         continue;
 
-        TrainerSpellData const* trainer_spells = sObjectMgr->GetNpcTrainerSpells(itr->second.Entry);
-        if (!trainer_spells)
-            continue;
+	// 	uint32 trainerId = co.Entry;
 
-        for (TrainerSpellMap::const_iterator iter = trainer_spells->spellList.begin(); iter != trainer_spells->spellList.end(); ++iter)
-        {
-            TrainerSpell const* tSpell = &iter->second;
-            if (!tSpell)
-                continue;
+	// 	TrainerSpellData const* trainer_spells = sObjectMgr->GetNpcTrainerSpells(trainerId);
+    //     if (!trainer_spells)
+    //         trainer_spells = sObjectMgr->GetNpcTrainerSpells(trainerId);
 
-            TrainerSpellState state = bot->GetTrainerSpellState(tSpell);
-            if (state != TRAINER_SPELL_GREEN)
-                continue;
+    //     if (!trainer_spells)
+    //         continue;
 
-            if (itr->second.trainer_type == TRAINER_TYPE_TRADESKILLS)
-            {
-                SpellInfo const* spell = sSpellMgr->GetSpellInfo(tSpell->spell);
-                if (spell)
-                {
-                    std::string const SpellName = spell->SpellName[0];
-                    if (spell->Effects[EFFECT_1].Effect == SPELL_EFFECT_SKILL_STEP)
-                    {
-                        uint32 skill = spell->Effects[EFFECT_1].MiscValue;
-                        if (skill)
-                        {
-                            SkillLineEntry const* pSkill = sSkillLineStore.LookupEntry(skill);
-                            if (pSkill)
-                            {
-                                if (SpellName.find("Apprentice") != std::string::npos && pSkill->categoryId == SKILL_CATEGORY_PROFESSION || pSkill->categoryId == SKILL_CATEGORY_SECONDARY)
-                                    continue;
-                            }
-                        }
-                    }
-                }
-            }
+    //     for (TrainerSpellMap::const_iterator itr =  trainer_spells->spellList.begin(); itr !=  trainer_spells->spellList.end(); ++itr)
+    //     {
+    //         TrainerSpell const* tSpell = &itr->second;
 
-            LearnSpell(tSpell->spell, out);
-        }
-    }
+    //         if (!tSpell)
+    //             continue;
+
+    //         if (!tSpell->learnedSpell[0] && !bot->IsSpellFitByClassAndRace(tSpell->learnedSpell[0]))
+    //             continue;
+
+    //         TrainerSpellState state = bot->GetTrainerSpellState(tSpell);
+    //         if (state != TRAINER_SPELL_GREEN)
+    //             continue;
+
+    //         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(tSpell->spell);
+    //         bool learn = true;
+    //         for (uint8 j = 0; j < 3; ++j)
+    //         {
+    //             if (!tSpell->learnedSpell[j] && !bot->IsSpellFitByClassAndRace(tSpell->learnedSpell[j]))
+    //                 continue;
+
+    //             if (spellInfo->Effects[j].Effect == SPELL_EFFECT_PROFICIENCY ||
+    //                 spellInfo->Effects[j].Effect == SPELL_EFFECT_SKILL_STEP ||
+    //                 spellInfo->Effects[j].Effect == SPELL_EFFECT_DUAL_WIELD)
+    //             {
+    //                 learn = false;
+    //                 break;
+    //             }
+    //         }
+    //         if (!learn) {
+    //             continue;
+    //         }
+
+    //         if (tSpell->learnedSpell[0]) {
+    //             bot->learnSpell(tSpell->learnedSpell[0], false);
+    //         }
+    //         else {
+    //             LOG_INFO("playerbots", "!tSpell->learnedSpell[0] {}", tSpell->spell);
+    //             botAI->CastSpell(tSpell->spell, bot);
+    //         }
+    //     }
+    // }
 }
 
 void AutoLearnSpellAction::LearnQuestSpells(std::ostringstream* out)

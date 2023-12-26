@@ -47,7 +47,9 @@ class RandomPlayerbotMgr : public PlayerbotHolder
         bool IsRandomBot(Player* bot);
         bool IsRandomBot(ObjectGuid::LowType bot);
         void Randomize(Player* bot);
+        void Clear(Player* bot);
         void RandomizeFirst(Player* bot);
+        void RandomizeMin(Player* bot);
         void IncreaseLevel(Player* bot);
         void ScheduleTeleport(uint32 bot, uint32 time = 0);
         void ScheduleChangeStrategy(uint32 bot, uint32 time = 0);
@@ -67,6 +69,7 @@ class RandomPlayerbotMgr : public PlayerbotHolder
         uint32 GetTradeDiscount(Player* bot, Player* master);
         void Refresh(Player* bot);
         void RandomTeleportForLevel(Player* bot);
+        void RandomTeleportGrindForLevel(Player* bot);
         void RandomTeleportForRpg(Player* bot);
         uint32 GetMaxAllowedBotCount();
         bool ProcessBot(Player* player);
@@ -103,7 +106,7 @@ class RandomPlayerbotMgr : public PlayerbotHolder
         uint32 GetEventValue(uint32 bot, std::string const event);
         std::string const GetEventData(uint32 bot, std::string const event);
         uint32 SetEventValue(uint32 bot, std::string const event, uint32 value, uint32 validIn, std::string const data = "");
-        std::list<uint32> GetBots();
+        void GetBots();
         std::vector<uint32> GetBgBots(uint32 bracket);
         time_t BgCheckTimer;
         time_t LfgCheckTimer;
@@ -120,7 +123,9 @@ class RandomPlayerbotMgr : public PlayerbotHolder
         std::vector<Player*> players;
         uint32 processTicks;
         std::map<uint8, std::vector<WorldLocation>> locsPerLevelCache;
-        std::map<uint32, std::vector<WorldLocation>> rpgLocsCache;
+        std::map<uint8, std::vector<WorldLocation>> bankerLocsPerLevelCache;
+
+        // std::map<uint32, std::vector<WorldLocation>> rpgLocsCache;
         std::map<uint32, std::map<uint32, std::vector<WorldLocation>>> rpgLocsCacheLevel;
         std::map<TeamId, std::map<BattlegroundTypeId, std::vector<uint32>>> BattleMastersCache;
         std::map<uint32, std::map<std::string, CachedEvent>> eventCache;

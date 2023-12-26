@@ -6,14 +6,16 @@
 #define _PLAYERBOT_DRUIDTRIGGERS_H
 
 #include "CureTriggers.h"
+#include "GenericTriggers.h"
 #include "SharedDefines.h"
+#include "Player.h"
 
 class PlayerbotAI;
 
 class MarkOfTheWildOnPartyTrigger : public BuffOnPartyTrigger
 {
     public:
-        MarkOfTheWildOnPartyTrigger(PlayerbotAI* botAI) : BuffOnPartyTrigger(botAI, "mark of the wild", 2) { }
+        MarkOfTheWildOnPartyTrigger(PlayerbotAI* botAI) : BuffOnPartyTrigger(botAI, "mark of the wild", 2 * 2000) { }
 
         bool IsActive() override;
 };
@@ -21,7 +23,7 @@ class MarkOfTheWildOnPartyTrigger : public BuffOnPartyTrigger
 class MarkOfTheWildTrigger : public BuffTrigger
 {
     public:
-        MarkOfTheWildTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "mark of the wild", 2) { }
+        MarkOfTheWildTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "mark of the wild", 2 * 2000) { }
 
         bool IsActive() override;
 };
@@ -29,15 +31,22 @@ class MarkOfTheWildTrigger : public BuffTrigger
 class ThornsOnPartyTrigger : public BuffOnPartyTrigger
 {
     public:
-        ThornsOnPartyTrigger(PlayerbotAI* botAI) : BuffOnPartyTrigger(botAI, "thorns", 2) { }
+        ThornsOnPartyTrigger(PlayerbotAI* botAI) : BuffOnPartyTrigger(botAI, "thorns", 2 * 2000) { }
 
         bool IsActive() override;
+};
+
+class ThornsOnMainTankTrigger : public BuffOnMainTankTrigger
+{
+    public:
+        ThornsOnMainTankTrigger(PlayerbotAI* botAI) : BuffOnMainTankTrigger(botAI, "thorns", false, 2 * 2000) { }
+
 };
 
 class ThornsTrigger : public BuffTrigger
 {
     public:
-        ThornsTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "thorns", 2) { }
+        ThornsTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "thorns", 2 * 2000) { }
 
         bool IsActive() override;
 };
@@ -51,19 +60,19 @@ class OmenOfClarityTrigger : public BuffTrigger
 class RakeTrigger : public DebuffTrigger
 {
     public:
-        RakeTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "rake") { }
+        RakeTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "rake", 1, true) { }
 };
 
 class InsectSwarmTrigger : public DebuffTrigger
 {
     public:
-        InsectSwarmTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "insect swarm") { }
+        InsectSwarmTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "insect swarm", 1, true) { }
 };
 
 class MoonfireTrigger : public DebuffTrigger
 {
     public:
-        MoonfireTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "moonfire") { }
+        MoonfireTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "moonfire", 1, true) { }
 
         bool IsActive() override;
 };
@@ -71,7 +80,7 @@ class MoonfireTrigger : public DebuffTrigger
 class FaerieFireTrigger : public DebuffTrigger
 {
     public:
-        FaerieFireTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "faerie fire") { }
+        FaerieFireTrigger(PlayerbotAI* botAI) : DebuffTrigger(botAI, "faerie fire", 1, false, 25.0f) { }
 };
 
 class FaerieFireFeralTrigger : public DebuffTrigger
@@ -176,6 +185,30 @@ class NaturesSwiftnessTrigger : public BuffTrigger
 {
     public:
         NaturesSwiftnessTrigger(PlayerbotAI* botAI) : BuffTrigger(botAI, "nature's swiftness") { }
+};
+
+class DruidPartyMemberRemoveCurseTrigger : public PartyMemberNeedCureTrigger
+{
+    public:
+        DruidPartyMemberRemoveCurseTrigger(PlayerbotAI* ai) : PartyMemberNeedCureTrigger(ai, "druid remove curse", DISPEL_CURSE) {}
+};
+
+class EclipseSolarCooldownTrigger : public SpellCooldownTrigger
+{
+    public:
+        EclipseSolarCooldownTrigger(PlayerbotAI* ai): SpellCooldownTrigger(ai, "eclipse (solar)") {}
+        bool IsActive() override {
+            return bot->HasSpellCooldown(48517);
+        }
+};
+
+class EclipseLunarCooldownTrigger : public SpellCooldownTrigger
+{
+    public:
+        EclipseLunarCooldownTrigger(PlayerbotAI* ai): SpellCooldownTrigger(ai, "eclipse (lunar)") {}
+        bool IsActive() override {
+            return bot->HasSpellCooldown(48518);
+        }
 };
 
 #endif

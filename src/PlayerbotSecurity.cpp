@@ -4,6 +4,7 @@
 
 #include "PlayerbotSecurity.h"
 #include "LFGMgr.h"
+#include "PlayerbotAIConfig.h"
 #include "Playerbots.h"
 
 PlayerbotSecurity::PlayerbotSecurity(Player* const bot) : bot(bot)
@@ -18,6 +19,9 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
         return PLAYERBOT_SECURITY_ALLOW_ALL;
 
     PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+    if (!botAI) {
+        return PLAYERBOT_SECURITY_DENY_ALL;
+    }
     if (botAI->IsOpposing(from))
     {
         if (reason)
@@ -36,16 +40,16 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             return PLAYERBOT_SECURITY_DENY_ALL;
         }
 
-        if (sLFGMgr->GetState(bot->GetGUID()) != lfg::LFG_STATE_NONE)
-        {
-            if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
-            {
-                if (reason)
-                    *reason = PLAYERBOT_DENY_LFG;
+        // if (sLFGMgr->GetState(bot->GetGUID()) != lfg::LFG_STATE_NONE)
+        // {
+        //     if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
+        //     {
+        //         if (reason)
+        //             *reason = PLAYERBOT_DENY_LFG;
 
-                return PLAYERBOT_SECURITY_TALK;
-            }
-        }
+        //         return PLAYERBOT_SECURITY_TALK;
+        //     }
+        // }
 
         Group* group = from->GetGroup();
         if (group)
@@ -58,7 +62,14 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             }
         }
 
-        if ((int32)bot->getLevel() - (int8)from->getLevel() > 30)
+        if (sPlayerbotAIConfig->groupInvitationPermission <= 0) {
+            if (reason)
+                *reason = PLAYERBOT_DENY_NONE;
+
+            return PLAYERBOT_SECURITY_TALK;
+        }
+
+        if (sPlayerbotAIConfig->groupInvitationPermission <= 1 && (int32)bot->getLevel() - (int8)from->getLevel() > 5)
         {
             if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
             {

@@ -4,6 +4,7 @@
 
 #include "AttackerCountValues.h"
 #include "Playerbots.h"
+#include "SharedDefines.h"
 
 uint8 MyAttackerCountValue::Calculate()
 {
@@ -13,39 +14,17 @@ uint8 MyAttackerCountValue::Calculate()
 bool HasAggroValue::Calculate()
 {
     Unit* target = GetTarget();
-    if (!target)
+    if (!target) {
         return true;
-
-    HostileReference *ref = bot->getHostileRefMgr().getFirst();
-    if (!ref)
-        return true; // simulate as target is not atacking anybody yet
-
-    while( ref )
-    {
-        ThreatMgr* threatMgr = ref->GetSource();
-        Unit* attacker = threatMgr->GetOwner();
-        Unit* victim = attacker->GetVictim();
-        if (victim == bot && target == attacker)
-            return true;
-
-        ref = ref->next();
     }
-
-    ref = target->GetThreatMgr().getCurrentVictim();
-    if (ref)
-    {
-        if (Unit* victim = ref->getTarget())
-        {
-            if (Player* pl = victim->ToPlayer())
-            {
-                if (botAI->IsTank(pl))
-                {
-                    return true;
-                }
-            }
-        }
+    Unit* victim = target->GetVictim();
+    if (!victim) {
+        return true;
     }
-
+    bool isMT = botAI->IsMainTank(bot);
+    if (victim && (victim->GetGUID() == bot->GetGUID() || (!isMT && victim->ToPlayer() && botAI->IsTank(victim->ToPlayer())))) {
+        return true;
+    }
     return false;
 }
 
@@ -108,7 +87,7 @@ uint8 BalancePercentValue::Calculate()
                 level *= 3;
                 break;
             case CREATURE_ELITE_WORLDBOSS:
-                level *= 5;
+                level *= 50;
                 break;
         }
 

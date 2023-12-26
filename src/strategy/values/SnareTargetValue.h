@@ -14,7 +14,7 @@ class Unit;
 class SnareTargetValue : public UnitCalculatedValue, public Qualified
 {
 	public:
-        SnareTargetValue(PlayerbotAI* botAI) : UnitCalculatedValue(botAI, "snare target") { }
+        SnareTargetValue(PlayerbotAI* botAI) : UnitCalculatedValue(botAI, "snare target", 1) { }
 
     protected:
         Unit* Calculate() override;

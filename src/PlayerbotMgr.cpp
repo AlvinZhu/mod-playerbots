@@ -2,12 +2,24 @@
  * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU GPL v2 license, you may redistribute it and/or modify it under version 2 of the License, or (at your option), any later version.
  */
 
+#include "CharacterCache.h"
 #include "CharacterPackets.h"
+#include "Common.h"
+#include "Define.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
+#include "PlayerbotAIConfig.h"
+#include "PlayerbotMgr.h"
+#include "PlayerbotSecurity.h"
 #include "Playerbots.h"
 #include "PlayerbotDbStore.h"
 #include "PlayerbotFactory.h"
+#include "SharedDefines.h"
 #include "WorldSession.h"
 #include "ChannelMgr.h"
+#include <cstdio>
+#include <cstring>
+#include <string>
 
 PlayerbotHolder::PlayerbotHolder() : PlayerbotAIBase(false)
 {
@@ -72,7 +84,7 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder con
     if (!bot)
     {
         LogoutPlayerBot(holder.GetGuid());
-        LOG_ERROR("playerbots", "Error logging in bot {}, please try to reset all random bots", holder.GetGuid().ToString().c_str());
+        // LOG_ERROR("playerbots", "Error logging in bot {}, please try to reset all random bots", holder.GetGuid().ToString().c_str());
         return;
     }
 
@@ -80,11 +92,10 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder con
 
     uint32 masterAccount = holder.GetMasterAccountId();
     WorldSession* masterSession = masterAccount ? sWorld->FindSession(masterAccount) : nullptr;
-
     bool allowed = false;
     if (botAccountId == masterAccount)
         allowed = true;
-    else if (masterSession && sPlayerbotAIConfig->allowGuildBots && bot->GetGuildId() == masterSession->GetPlayer()->GetGuildId())
+    else if (masterSession && sPlayerbotAIConfig->allowGuildBots && bot->GetGuildId() != 0 && bot->GetGuildId() == masterSession->GetPlayer()->GetGuildId())
         allowed = true;
     else if (sPlayerbotAIConfig->IsInRandomAccountList(botAccountId))
         allowed = true;
@@ -98,12 +109,12 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder con
         if (masterSession)
         {
             ChatHandler ch(masterSession);
-            ch.PSendSysMessage("You are not allowed to control bot {}", bot->GetName());
+            ch.PSendSysMessage("You are not allowed to control bot %s", bot->GetName());
         }
-
+        OnBotLogin(bot);
         LogoutPlayerBot(bot->GetGUID());
 
-        LOG_ERROR("playerbots", "Attempt to add not allowed bot {}, please try to reset all random bots", bot->GetName());
+        // LOG_ERROR("playerbots", "Attempt to add not allowed bot {}, please try to reset all random bots", bot->GetName());
     }
 }
 
@@ -114,7 +125,10 @@ void PlayerbotHolder::UpdateSessions()
         Player* const bot = itr->second;
         if (bot->IsBeingTeleported())
         {
-            GET_PLAYERBOT_AI(bot)->HandleTeleportAck();
+            PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+            if (botAI) {
+                botAI->HandleTeleportAck();
+            }
         }
         else if (bot->IsInWorld())
         {
@@ -224,6 +238,9 @@ void PlayerbotHolder::LogoutPlayerBot(ObjectGuid guid)
         WorldSession* botWorldSessionPtr = bot->GetSession();
         WorldSession* masterWorldSessionPtr = nullptr;
 
+        if (botWorldSessionPtr->isLogingOut())
+            return;
+
         Player* master = botAI->GetMaster();
         if (master)
             masterWorldSessionPtr = master->GetSession();
@@ -301,6 +318,9 @@ void PlayerbotHolder::DisablePlayerBot(ObjectGuid guid)
     if (Player* bot = GetPlayerBot(guid))
     {
         PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+        if (!botAI) {
+            return;
+        }
         botAI->TellMaster("Goodbye!");
         bot->StopMoving();
         bot->GetMotionMaster()->Clear();
@@ -349,6 +369,9 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
     playerBots[bot->GetGUID()] = bot;
 
     PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+    if (!botAI) {
+        return;
+    }
     Player* master = botAI->GetMaster();
     if (master)
     {
@@ -400,7 +423,8 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
     }
     else
     {
-        botAI->ResetStrategies(!sRandomPlayerbotMgr->IsRandomBot(bot));
+        // botAI->ResetStrategies(!sRandomPlayerbotMgr->IsRandomBot(bot));
+        botAI->ResetStrategies();
     }
 
     if (master && !master->HasUnitState(UNIT_STATE_IN_FLIGHT))
@@ -415,8 +439,24 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
     // set delay on login
     botAI->SetNextCheckDelay(urand(2000, 4000));
 
-    botAI->TellMaster("Hello!");
+    botAI->TellMaster("Hello!", PLAYERBOT_SECURITY_TALK);
 
+    if (master && master->GetGroup() && !group) {
+        master->GetGroup()->AddMember(bot);
+    }
+
+    uint32 accountId = bot->GetSession()->GetAccountId();
+    bool isRandomAccount = sPlayerbotAIConfig->IsInRandomAccountList(accountId);
+    
+    bot->SaveToDB(false, false);
+    if (master && isRandomAccount && master->GetLevel() < bot->GetLevel()) {
+        // PlayerbotFactory factory(bot, master->getLevel());
+        // factory.Randomize(false);
+        uint32 mixedGearScore = PlayerbotAI::GetMixedGearScore(master, true, false, 12) * sPlayerbotAIConfig->autoInitEquipLevelLimitRatio;
+        PlayerbotFactory factory(bot, master->getLevel(), ITEM_QUALITY_LEGENDARY, mixedGearScore);
+        factory.Randomize(false);
+    }
+    
     // bots join World chat if not solo oriented
     if (bot->getLevel() >= 10 && sRandomPlayerbotMgr->IsRandomBot(bot) && GET_PLAYERBOT_AI(bot) && GET_PLAYERBOT_AI(bot)->GetGrouperType() != GrouperType::SOLO)
     {
@@ -502,17 +542,26 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
         return "ok";
     }
 
-    if (admin)
-    {
-        Player* bot = GetPlayerBot(guid);
-        if (!bot)
-            bot = sRandomPlayerbotMgr->GetPlayerBot(guid);
+    // if (admin)
+    // {
+    Player* bot = GetPlayerBot(guid);
+    if (!bot)
+        bot = sRandomPlayerbotMgr->GetPlayerBot(guid);
 
-        if (!bot)
-            return "bot not found";
+    if (!bot)
+        return "bot not found";
+    
+    if (!isRandomAccount || isRandomBot) {
+        return "ERROR: You can not use this command on non-summoned random bot.";
+    }
 
+    if (GET_PLAYERBOT_AI(bot)) {
         if (Player* master = GET_PLAYERBOT_AI(bot)->GetMaster())
         {
+            if (master->GetSession()->GetSecurity() <= SEC_PLAYER && sPlayerbotAIConfig->autoInitOnly && cmd != "init=auto") {
+                return "The command is not allowed, use init=auto instead.";
+            }
+            int gs;
             if (cmd == "init=white" || cmd == "init=common")
             {
                 PlayerbotFactory factory(bot, master->getLevel(), ITEM_QUALITY_NORMAL);
@@ -543,26 +592,40 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
                 factory.Randomize(false);
                 return "ok";
             }
-        }
-
-        if (cmd == "levelup" || cmd == "level")
-        {
-            PlayerbotFactory factory(bot, bot->getLevel());
-            factory.Randomize(true);
-            return "ok";
-        }
-        else if (cmd == "refresh")
-        {
-            PlayerbotFactory factory(bot, bot->getLevel());
-            factory.Refresh();
-            return "ok";
-        }
-        else if (cmd == "random")
-        {
-            sRandomPlayerbotMgr->Randomize(bot);
-            return "ok";
+            else if (cmd == "init=auto")
+            {
+                uint32 mixedGearScore = PlayerbotAI::GetMixedGearScore(master, true, false, 12) * sPlayerbotAIConfig->autoInitEquipLevelLimitRatio;
+                PlayerbotFactory factory(bot, master->getLevel(), ITEM_QUALITY_LEGENDARY, mixedGearScore);
+                factory.Randomize(false);
+                return "ok, gear score limit: " + std::to_string(mixedGearScore / (ITEM_QUALITY_EPIC + 1)) + "(for epic)";
+            }
+            else if (cmd.starts_with("init=") && sscanf(cmd.c_str(), "init=%d", &gs) != -1)
+            {
+                PlayerbotFactory factory(bot, master->getLevel(), ITEM_QUALITY_LEGENDARY, gs);
+                factory.Randomize(false);
+                return "ok, gear score limit: " + std::to_string(gs / (ITEM_QUALITY_EPIC + 1)) + "(for epic)";
+            }
         }
     }
+
+    if (cmd == "levelup" || cmd == "level")
+    {
+        PlayerbotFactory factory(bot, bot->getLevel());
+        factory.Randomize(true);
+        return "ok";
+    }
+    else if (cmd == "refresh")
+    {
+        PlayerbotFactory factory(bot, bot->getLevel());
+        factory.Refresh();
+        return "ok";
+    }
+    else if (cmd == "random")
+    {
+        sRandomPlayerbotMgr->Randomize(bot);
+        return "ok";
+    }
+    // }
 
     return "unknown command";
 }
@@ -609,21 +672,79 @@ std::vector<std::string> PlayerbotHolder::HandlePlayerbotCommand(char const* arg
     if (!*args)
     {
         messages.push_back("usage: list/reload/tweak/self or add/init/remove PLAYERNAME");
-        return std::move(messages);
+        messages.push_back("       addclass CLASSNAME");
+        return messages;
     }
 
     char* cmd = strtok ((char*)args, " ");
     char* charname = strtok (nullptr, " ");
     if (!cmd)
     {
-        messages.push_back("usage: list/reload/tweak/self or add/init/remove PLAYERNAME");
-        return std::move(messages);
+        messages.push_back("usage: list/reload/tweak/self or add/init/remove PLAYERNAME or addclass CLASSNAME");
+        return messages;
+    }
+
+    if (!strcmp(cmd, "initself")) {
+        if (master->GetSession()->GetSecurity() >= SEC_GAMEMASTER) {
+            // OnBotLogin(master);
+            PlayerbotFactory factory(master, master->getLevel(), ITEM_QUALITY_EPIC);
+            factory.Randomize(false);
+            messages.push_back("initself ok");
+            return messages;
+        } else {
+            messages.push_back("ERROR: Only GM can use this command.");
+            return messages;
+        }
+    }
+
+    
+
+    
+    
+    if (!strncmp(cmd, "initself=", 9)) {
+        if (!strcmp(cmd, "initself=rare")) {
+            if (master->GetSession()->GetSecurity() >= SEC_GAMEMASTER) {
+                // OnBotLogin(master);
+                PlayerbotFactory factory(master, master->getLevel(), ITEM_QUALITY_RARE);
+                factory.Randomize(false);
+                messages.push_back("initself ok");
+                return messages;
+            } else {
+                messages.push_back("ERROR: Only GM can use this command.");
+                return messages;
+            }
+        }
+        if (!strcmp(cmd, "initself=epic")) {
+            if (master->GetSession()->GetSecurity() >= SEC_GAMEMASTER) {
+                // OnBotLogin(master);
+                PlayerbotFactory factory(master, master->getLevel(), ITEM_QUALITY_EPIC);
+                factory.Randomize(false);
+                messages.push_back("initself ok");
+                return messages;
+            } else {
+                messages.push_back("ERROR: Only GM can use this command.");
+                return messages;
+            }
+        }
+        int32 gs;
+        if (sscanf(cmd, "initself=%d", &gs) != -1) {
+            if (master->GetSession()->GetSecurity() >= SEC_GAMEMASTER) {
+                // OnBotLogin(master);
+                PlayerbotFactory factory(master, master->getLevel(), ITEM_QUALITY_LEGENDARY, gs);
+                factory.Randomize(false);
+                messages.push_back("initself ok, gs = " + std::to_string(gs));
+                return messages;
+            } else {
+                messages.push_back("ERROR: Only GM can use this command.");
+                return messages;
+            }
+        }
     }
 
     if (!strcmp(cmd, "list"))
     {
         messages.push_back(ListBots(master));
-        return std::move(messages);
+        return messages;
     }
 
     if (!strcmp(cmd, "reload"))
@@ -663,15 +784,123 @@ std::vector<std::string> PlayerbotHolder::HandlePlayerbotCommand(char const* arg
         return messages;
     }
 
+    if (!strcmp(cmd, "lookup"))
+    {
+        messages.push_back(LookupBots(master));
+        return messages;
+    }
+
+    if (!strcmp(cmd, "addclass"))
+    {
+        if (sPlayerbotAIConfig->addClassCommand == 0) {
+            messages.push_back("addclass command was disabled, please check your configuration");
+            return messages;
+        }
+        if (!charname) {
+            messages.push_back("addclass: invalid CLASSNAME(warrior/paladin/hunter/rogue/priest/shaman/mage/warlock/druid/dk)");
+            return messages;
+        }
+        uint8 claz;
+        if (!strcmp(charname, "warrior"))
+        {
+            claz = 1;
+        }
+        else if (!strcmp(charname, "paladin"))
+        {
+            claz = 2;
+        }                
+        else if (!strcmp(charname, "hunter"))
+        {
+            claz = 3;
+        }
+        else if (!strcmp(charname, "rogue"))
+        {
+            claz = 4;
+        }                
+        else if (!strcmp(charname, "priest"))
+        {
+            claz = 5;
+        }                
+        else if (!strcmp(charname, "shaman"))
+        {
+            claz = 7;
+        }                
+        else if (!strcmp(charname, "mage"))
+        {
+            claz = 8;
+        }                
+        else if (!strcmp(charname, "warlock"))
+        {
+            claz = 9;
+        }                
+        else if (!strcmp(charname, "druid"))
+        {
+            claz = 11;
+        }
+        else if (!strcmp(charname, "dk"))
+        {
+            claz = 6;
+        }
+        else
+        {
+            messages.push_back("Error: Invalid Class. Try again.");
+            return messages;
+        }
+        uint8 master_race = master->getRace();
+        std::string race_limit;
+        switch (master_race)
+        {
+            case 1:
+            case 3:
+            case 4:
+            case 7:
+            case 11:
+                race_limit = "1, 3, 4, 7, 11";
+                break;
+            case 2: 
+            case 5:
+            case 6:
+            case 8:
+            case 10:
+                race_limit = "2, 5, 6, 8, 10";
+                break;
+        }
+        // find a bot fit conditions and not in any guild
+        QueryResult results = CharacterDatabase.Query("SELECT guid FROM characters "
+            "WHERE name IN (SELECT name FROM playerbots_names) AND class = '{}' AND online = 0 AND race IN ({}) AND guid NOT IN ( SELECT guid FROM guild_member ) "
+            "ORDER BY account DESC LIMIT 1", claz, race_limit);
+        if (results)
+        {
+            Field* fields = results->Fetch();
+            ObjectGuid guid = ObjectGuid(HighGuid::Player, fields[0].Get<uint32>());
+            AddPlayerBot(guid, master->GetSession()->GetAccountId());
+            
+            messages.push_back("addclass " + std::string(charname) + " ok");
+            return messages;
+        }
+        messages.push_back("addclass failed.");
+        return messages;
+    }
+
+    std::string charnameStr;
+
     if (!charname)
     {
-        messages.push_back("usage: list/reload/tweak/self or add/init/remove PLAYERNAME");
-        return std::move(messages);
+        std::string name;
+        bool isPlayer = sCharacterCache->GetCharacterNameByGuid(master->GetTarget(), name);
+        // Player* tPlayer = ObjectAccessor::FindConnectedPlayer(master->GetTarget());
+        if (isPlayer) {
+            charnameStr = name;
+        } else {
+            messages.push_back("usage: list/reload/tweak/self or add/init/remove PLAYERNAME");
+            return messages;
+        }
+    } else {
+        charnameStr = charname;
     }
 
     std::string const cmdStr = cmd;
-    std::string const charnameStr = charname;
-
+    
     std::set<std::string> bots;
     if (charnameStr == "*" && master)
     {
@@ -679,7 +908,7 @@ std::vector<std::string> PlayerbotHolder::HandlePlayerbotCommand(char const* arg
         if (!group)
         {
             messages.push_back("you must be in group");
-            return std::move(messages);
+            return messages;
         }
 
         Group::MemberSlotList slots = group->GetMemberSlots();
@@ -754,7 +983,7 @@ std::vector<std::string> PlayerbotHolder::HandlePlayerbotCommand(char const* arg
         messages.push_back(out.str());
     }
 
-    return std::move(messages);
+    return messages;
 }
 
 uint32 PlayerbotHolder::GetAccountId(std::string const name)
@@ -870,6 +1099,28 @@ std::string const PlayerbotHolder::ListBots(Player* master)
     return out.str();
 }
 
+std::string const PlayerbotHolder::LookupBots(Player* master)
+{
+    std::list<std::string> messages;
+    messages.push_back("Classes Available:");
+    messages.push_back("|TInterface\\icons\\INV_Sword_27.png:25:25:0:-1|t Warrior");
+    messages.push_back("|TInterface\\icons\\INV_Hammer_01.png:25:25:0:-1|t Paladin");
+    messages.push_back("|TInterface\\icons\\INV_Weapon_Bow_07.png:25:25:0:-1|t Hunter");
+    messages.push_back("|TInterface\\icons\\INV_ThrowingKnife_04.png:25:25:0:-1|t Rogue");
+    messages.push_back("|TInterface\\icons\\INV_Staff_30.png:25:25:0:-1|t Priest");
+    messages.push_back("|TInterface\\icons\\inv_jewelry_talisman_04.png:25:25:0:-1|t Shaman");
+    messages.push_back("|TInterface\\icons\\INV_staff_30.png:25:25:0:-1|t Mage");
+    messages.push_back("|TInterface\\icons\\INV_staff_30.png:25:25:0:-1|t Warlock");
+    messages.push_back("|TInterface\\icons\\Ability_Druid_Maul.png:25:25:0:-1|t Druid");
+    messages.push_back("DK");
+    messages.push_back("(Usage: .bot lookup CLASS)");
+    std::string ret_msg;
+    for (std::string msg: messages) {
+        ret_msg += msg + "\n";
+    }
+    return ret_msg;
+}
+
 PlayerbotMgr::PlayerbotMgr(Player* const master) : PlayerbotHolder(),  master(master), lastErrorTell(0)
 {
 }
@@ -907,14 +1158,16 @@ void PlayerbotMgr::HandleCommand(uint32 type, std::string const text)
     for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
     {
         Player* const bot = it->second;
-        GET_PLAYERBOT_AI(bot)->HandleCommand(type, text, master);
+        PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+        if (botAI)
+            botAI->HandleCommand(type, text, master);
     }
 
     for (PlayerBotMap::const_iterator it = sRandomPlayerbotMgr->GetPlayerBotsBegin(); it != sRandomPlayerbotMgr->GetPlayerBotsEnd(); ++it)
     {
         Player* const bot = it->second;
         PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
-        if (botAI->GetMaster() == master)
+        if (botAI && botAI->GetMaster() == master)
             botAI->HandleCommand(type, text, master);
     }
 }
@@ -926,15 +1179,16 @@ void PlayerbotMgr::HandleMasterIncomingPacket(WorldPacket const& packet)
         Player* const bot = it->second;
         if (!bot)
             continue;
-
-        GET_PLAYERBOT_AI(bot)->HandleMasterIncomingPacket(packet);
+        PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+        if (botAI)
+            botAI->HandleMasterIncomingPacket(packet);
     }
 
     for (PlayerBotMap::const_iterator it = sRandomPlayerbotMgr->GetPlayerBotsBegin(); it != sRandomPlayerbotMgr->GetPlayerBotsEnd(); ++it)
     {
         Player* const bot = it->second;
         PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
-        if (botAI->GetMaster() == GetMaster())
+        if (botAI && botAI->GetMaster() == GetMaster())
             botAI->HandleMasterIncomingPacket(packet);
     }
 
@@ -960,14 +1214,16 @@ void PlayerbotMgr::HandleMasterOutgoingPacket(WorldPacket const& packet)
     for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
     {
         Player* const bot = it->second;
-        GET_PLAYERBOT_AI(bot)->HandleMasterOutgoingPacket(packet);
+        PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+        if (botAI) 
+            botAI->HandleMasterOutgoingPacket(packet);
     }
 
     for (PlayerBotMap::const_iterator it = sRandomPlayerbotMgr->GetPlayerBotsBegin(); it != sRandomPlayerbotMgr->GetPlayerBotsEnd(); ++it)
     {
         Player* const bot = it->second;
         PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
-        if (botAI->GetMaster() == GetMaster())
+        if (botAI && botAI->GetMaster() == GetMaster())
             botAI->HandleMasterOutgoingPacket(packet);
     }
 }
@@ -983,7 +1239,7 @@ void PlayerbotMgr::SaveToDB()
     for (PlayerBotMap::const_iterator it = sRandomPlayerbotMgr->GetPlayerBotsBegin(); it != sRandomPlayerbotMgr->GetPlayerBotsEnd(); ++it)
     {
         Player* const bot = it->second;
-        if (GET_PLAYERBOT_AI(bot)->GetMaster() == GetMaster())
+        if (GET_PLAYERBOT_AI(bot) && GET_PLAYERBOT_AI(bot)->GetMaster() == GetMaster())
             bot->SaveToDB(false, false);
     }
 }
@@ -991,6 +1247,9 @@ void PlayerbotMgr::SaveToDB()
 void PlayerbotMgr::OnBotLoginInternal(Player * const bot)
 {
     PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+    if (!botAI) {
+        return;
+    }
     botAI->SetMaster(master);
     botAI->ResetStrategies();
 
@@ -1112,10 +1371,13 @@ void PlayerbotsMgr::RemovePlayerBotData(ObjectGuid const& guid)
 
 PlayerbotAI* PlayerbotsMgr::GetPlayerbotAI(Player* player)
 {
-    if (!(sPlayerbotAIConfig->enabled) || !player || (!player->IsInWorld() && !player->IsBeingTeleported()))
+    if (!(sPlayerbotAIConfig->enabled) || !player)
     {
         return nullptr;
     }
+    // if (player->GetSession()->isLogingOut() || player->IsDuringRemoveFromWorld()) {
+    //     return nullptr;
+    // }
     auto itr = _playerbotsMap.find(player->GetGUID());
     if (itr != _playerbotsMap.end())
     {
@@ -1128,7 +1390,7 @@ PlayerbotAI* PlayerbotsMgr::GetPlayerbotAI(Player* player)
 
 PlayerbotMgr* PlayerbotsMgr::GetPlayerbotMgr(Player* player)
 {
-    if (!(sPlayerbotAIConfig->enabled) || !player || (!player->IsInWorld() && !player->IsBeingTeleported()))
+    if (!(sPlayerbotAIConfig->enabled) || !player)
     {
         return nullptr;
     }

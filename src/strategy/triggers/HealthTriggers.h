@@ -7,6 +7,7 @@
 
 #include "Trigger.h"
 #include "PlayerbotAIConfig.h"
+#include <stdexcept>
 
 class PlayerbotAI;
 
@@ -106,10 +107,18 @@ class TargetCriticalHealthTrigger : public TargetLowHealthTrigger
 class PartyMemberDeadTrigger : public Trigger
 {
 	public:
-		PartyMemberDeadTrigger(PlayerbotAI* botAI) : Trigger(botAI, "resurrect", 3) { }
+		PartyMemberDeadTrigger(PlayerbotAI* botAI) : Trigger(botAI, "resurrect", 1 * 1000) { }
 
         std::string const GetTargetName() override { return "party member to resurrect"; }
 		bool IsActive() override;
+};
+
+class CombatPartyMemberDeadTrigger : public Trigger 
+{
+    public:
+        CombatPartyMemberDeadTrigger(PlayerbotAI* ai) : Trigger(ai, "combat party member to resurrect", 1) {}
+        std::string const GetTargetName() override { return "party member to resurrect"; }
+        bool IsActive() override;
 };
 
 class DeadTrigger : public Trigger
@@ -131,5 +140,15 @@ class AoeHealTrigger : public Trigger
         int32 count;
         std::string const type;
 };
+
+class AoeInGroupTrigger : public Trigger {
+    public:
+    	AoeInGroupTrigger(PlayerbotAI* ai, std::string name, std::string type, float ratio) :
+    		Trigger(ai, name), ratio(ratio), type(type) {}
+        bool IsActive() override;
+    protected:
+        float ratio;
+        std::string type;
+    };
 
 #endif

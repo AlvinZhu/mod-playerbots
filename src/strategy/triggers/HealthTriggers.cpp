@@ -20,6 +20,11 @@ bool PartyMemberDeadTrigger::IsActive()
 	return GetTarget();
 }
 
+bool CombatPartyMemberDeadTrigger::IsActive()
+{
+    return GetTarget();
+}
+
 bool DeadTrigger::IsActive()
 {
     return AI_VALUE2(bool, "dead", GetTargetName());
@@ -30,3 +35,8 @@ bool AoeHealTrigger::IsActive()
     return AI_VALUE2(uint8, "aoe heal", type) >= count;
 }
 
+bool AoeInGroupTrigger::IsActive()
+{
+    Group *group = bot->GetGroup();
+    return group && group->GetMembersCount() >= 5 && AI_VALUE2(uint8, "aoe heal", type) >= (group->GetMembersCount() * ratio);
+}

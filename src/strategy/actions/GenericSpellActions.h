@@ -6,6 +6,8 @@
 #define _PLAYERBOT_GENERICSPELLACTIONS_H
 
 #include "Action.h"
+#include "PlayerbotAI.h"
+#include "PlayerbotAIConfig.h"
 #include "Value.h"
 
 class PlayerbotAI;
@@ -50,23 +52,36 @@ class CastMeleeSpellAction : public CastSpellAction
 class CastDebuffSpellAction : public CastAuraSpellAction
 {
     public:
-        CastDebuffSpellAction(PlayerbotAI* botAI, std::string const spell, bool isOwner = false) : CastAuraSpellAction(botAI, spell, isOwner) { }
+        CastDebuffSpellAction(PlayerbotAI* botAI, std::string const spell, bool isOwner = false, float needLifeTime = 8.0f) : CastAuraSpellAction(botAI, spell, isOwner), needLifeTime(needLifeTime) { }
+        bool isUseful() override;
+    private:
+        float needLifeTime;
 };
 
-class CastDebuffSpellOnAttackerAction : public CastAuraSpellAction
+class CastDebuffSpellOnAttackerAction : public CastDebuffSpellAction
 {
     public:
-        CastDebuffSpellOnAttackerAction(PlayerbotAI* botAI, std::string const spell, bool isOwner = false) : CastAuraSpellAction(botAI, spell, isOwner) { }
+        CastDebuffSpellOnAttackerAction(PlayerbotAI* botAI, std::string const spell, bool isOwner = true, float needLifeTime = 8.0f) : CastDebuffSpellAction(botAI, spell, isOwner, needLifeTime) { }
 
         Value<Unit*>* GetTargetValue() override;
         std::string const getName() override { return spell + " on attacker"; }
-        ActionThreatType getThreatType() override { return ActionThreatType::Aoe; }
+        // ActionThreatType getThreatType() override { return ActionThreatType::Aoe; }
+};
+
+class CastDebuffSpellOnMeleeAttackerAction : public CastDebuffSpellAction
+{
+    public:
+        CastDebuffSpellOnMeleeAttackerAction(PlayerbotAI* botAI, std::string const spell, bool isOwner = true, float needLifeTime = 8.0f) : CastDebuffSpellAction(botAI, spell, isOwner, needLifeTime) { }
+
+        Value<Unit*>* GetTargetValue() override;
+        std::string const getName() override { return spell + " on attacker"; }
+        // ActionThreatType getThreatType() override { return ActionThreatType::Aoe; }
 };
 
 class CastBuffSpellAction : public CastAuraSpellAction
 {
 	public:
-		CastBuffSpellAction(PlayerbotAI* botAI, std::string const spell);
+		CastBuffSpellAction(PlayerbotAI* botAI, std::string const spell, bool checkIsOwner = false);
 
         std::string const GetTargetName() override { return "self target"; }
 };
@@ -137,9 +152,14 @@ class HealPartyMemberAction : public CastHealingSpellAction, public PartyMemberA
 class ResurrectPartyMemberAction : public CastSpellAction
 {
 	public:
-		ResurrectPartyMemberAction(PlayerbotAI* botAI, std::string const spell) : CastSpellAction(botAI, spell) { }
+		ResurrectPartyMemberAction(PlayerbotAI* botAI, std::string const spell) : CastSpellAction(botAI, spell) {
+        }
 
 		std::string const GetTargetName() override { return "party member to resurrect"; }
+        NextAction** getPrerequisites() override
+		{
+            return NextAction::merge( NextAction::array(0, new NextAction("reach party member to resurrect"), NULL), Action::getPrerequisites());
+		}
 };
 
 class CurePartyMemberAction : public CastSpellAction, public PartyMemberActionNameSupport
@@ -322,4 +342,26 @@ class CastBladeSalvoAction : public CastVehicleSpellAction
         CastBladeSalvoAction(PlayerbotAI* botAI) : CastVehicleSpellAction(botAI, "blade salvo") { }
 };
 
+class MainTankActionNameSupport {
+public:
+    MainTankActionNameSupport(std::string spell)
+    {
+        name = std::string(spell) + " on main tank";
+    }
+
+    virtual std::string const getName() { return name; }
+
+private:
+    std::string name;
+};
+
+class BuffOnMainTankAction : public CastBuffSpellAction, public MainTankActionNameSupport
+{
+public:
+    BuffOnMainTankAction(PlayerbotAI* ai, std::string spell, bool checkIsOwner = false) :
+        CastBuffSpellAction(ai, spell, checkIsOwner), MainTankActionNameSupport(spell) {}
+public:
+    virtual Value<Unit*>* GetTargetValue();
+    virtual std::string const getName() { return MainTankActionNameSupport::getName(); }
+};
 #endif

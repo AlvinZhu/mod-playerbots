@@ -24,9 +24,11 @@
 #include "QuestAction.h"
 #include "PassLeadershipToMasterAction.h"
 #include "PetitionSignAction.h"
+#include "QuestConfirmAcceptAction.h"
 #include "ReadyCheckAction.h"
 #include "RememberTaxiAction.h"
 #include "ReviveFromCorpseAction.h"
+#include "RewardAction.h"
 #include "SeeSpellAction.h"
 #include "SecurityCheckAction.h"
 #include "TalkToQuestGiverAction.h"
@@ -35,6 +37,7 @@
 #include "TradeStatusAction.h"
 #include "UseMeetingStoneAction.h"
 #include "NamedObjectContext.h"
+#include "QuestConfirmAcceptAction.h"
 
 class PlayerbotAI;
 
@@ -77,6 +80,7 @@ class WorldPacketActionContext : public NamedObjectContext<Action>
             creators["guild accept"] = &WorldPacketActionContext::guild_accept;
             creators["inventory change failure"] = &WorldPacketActionContext::inventory_change_failure;
             creators["bg status check"] = &WorldPacketActionContext::bg_status_check;
+            creators["bg strategy check"] = &WorldPacketActionContext::bg_strategy_check;
             creators["bg status"] = &WorldPacketActionContext::bg_status;
             creators["bg join"] = &WorldPacketActionContext::bg_join;
             creators["bg leave"] = &WorldPacketActionContext::bg_leave;
@@ -89,6 +93,8 @@ class WorldPacketActionContext : public NamedObjectContext<Action>
             creators["lfg teleport"] = &WorldPacketActionContext::lfg_teleport;
             creators["see spell"] = &WorldPacketActionContext::see_spell;
             creators["arena team accept"] = &WorldPacketActionContext::arena_team_accept;
+            creators["turn in query quest"] = &WorldPacketActionContext::turn_in_query_quest;
+            creators["quest confirm accept"] = &WorldPacketActionContext::quest_confirm_accept;
         }
 
     private:
@@ -123,12 +129,13 @@ class WorldPacketActionContext : public NamedObjectContext<Action>
         static Action* accept_quest(PlayerbotAI* botAI) { return new AcceptQuestAction(botAI); }
         static Action* accept_all_quests(PlayerbotAI* botAI) { return new AcceptAllQuestsAction(botAI); }
         static Action* accept_quest_share(PlayerbotAI* botAI) { return new AcceptQuestShareAction(botAI); }
-        static Action* loot_roll(PlayerbotAI* botAI) { return (QueryItemUsageAction*)new LootRollAction(botAI); }
-        static Action* master_loot_roll(PlayerbotAI* botAI) { return (QueryItemUsageAction*)new MasterLootRollAction(botAI); }
+        static Action* loot_roll(PlayerbotAI* botAI) { return new LootRollAction(botAI); }
+        static Action* master_loot_roll(PlayerbotAI* botAI) { return new MasterLootRollAction(botAI); }
         static Action* bg_join(PlayerbotAI* botAI) { return new BGJoinAction(botAI); }
         static Action* bg_leave(PlayerbotAI* botAI) { return new BGLeaveAction(botAI); }
         static Action* bg_status(PlayerbotAI* botAI) { return new BGStatusAction(botAI); }
         static Action* bg_status_check(PlayerbotAI* botAI) { return new BGStatusCheckAction(botAI); }
+        static Action* bg_strategy_check(PlayerbotAI* botAI) { return new BGStrategyCheckAction(botAI); }
         static Action* arena_tactics(PlayerbotAI* botAI) { return new ArenaTactics(botAI); }
         static Action* petition_sign(PlayerbotAI* botAI) { return new PetitionSignAction(botAI); }
         static Action* lfg_teleport(PlayerbotAI* botAI) { return new LfgTeleportAction(botAI); }
@@ -138,6 +145,8 @@ class WorldPacketActionContext : public NamedObjectContext<Action>
         static Action* lfg_join(PlayerbotAI* botAI) { return new LfgJoinAction(botAI); }
         static Action* see_spell(PlayerbotAI* botAI) { return new SeeSpellAction(botAI); }
         static Action* arena_team_accept(PlayerbotAI* botAI) { return new ArenaTeamAcceptAction(botAI); }
+        static Action* turn_in_query_quest(PlayerbotAI* botAI) { return new TurnInQueryQuestAction(botAI); }
+        static Action* quest_confirm_accept(PlayerbotAI* botAI) { return new QuestConfirmAcceptAction(botAI); }
 };
 
 #endif

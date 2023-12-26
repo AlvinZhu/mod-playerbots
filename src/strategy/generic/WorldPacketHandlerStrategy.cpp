@@ -26,16 +26,25 @@ void WorldPacketHandlerStrategy::InitTriggers(std::vector<TriggerNode*>& trigger
     triggers.push_back(new TriggerNode("loot response", NextAction::array(0, new NextAction("store loot", relevance), nullptr)));
     triggers.push_back(new TriggerNode("item push result", NextAction::array(0, new NextAction("query item usage", relevance), new NextAction("equip upgrades", relevance), nullptr)));
     triggers.push_back(new TriggerNode("ready check finished", NextAction::array(0, new NextAction("finish ready check", relevance), nullptr)));
-    triggers.push_back(new TriggerNode("often", NextAction::array(0, new NextAction("security check", relevance), new NextAction("check mail", relevance), nullptr)));
+    // triggers.push_back(new TriggerNode("often", NextAction::array(0, new NextAction("security check", relevance), new NextAction("check mail", relevance), nullptr)));
     triggers.push_back(new TriggerNode("guild invite", NextAction::array(0, new NextAction("guild accept", relevance), nullptr)));
     triggers.push_back(new TriggerNode("petition offer", NextAction::array(0, new NextAction("petition sign", relevance), nullptr)));
     triggers.push_back(new TriggerNode("lfg proposal", NextAction::array(0, new NextAction("lfg accept", relevance), nullptr)));
     triggers.push_back(new TriggerNode("lfg proposal active", NextAction::array(0, new NextAction("lfg accept", relevance), nullptr)));
     triggers.push_back(new TriggerNode("arena team invite", NextAction::array(0, new NextAction("arena team accept", relevance), nullptr)));
+    triggers.push_back(new TriggerNode("quest confirm accept", NextAction::array(0, new NextAction("quest confirm accept", relevance), nullptr)));
     //triggers.push_back(new TriggerNode("no non bot players around", NextAction::array(0, new NextAction("delay", relevance), nullptr)));
     triggers.push_back(new TriggerNode("bg status", NextAction::array(0, new NextAction("bg status", relevance), nullptr)));
     triggers.push_back(new TriggerNode("xpgain", NextAction::array(0, new NextAction("xp gain", relevance), nullptr)));
-    triggers.push_back(new TriggerNode("levelup", NextAction::array(0, new NextAction("auto talents", relevance), new NextAction("auto learn spell", relevance), nullptr)));
+    triggers.push_back(new TriggerNode("levelup", NextAction::array(0, 
+        new NextAction("auto talents", relevance), 
+        new NextAction("auto learn spell", relevance), 
+        new NextAction("auto teleport for level", relevance), 
+        nullptr)));
+    // triggers.push_back(new TriggerNode("group destroyed", NextAction::array(0, new NextAction("reset botAI", relevance), nullptr)));
+    triggers.push_back(new TriggerNode("questgiver quest details", NextAction::array(0, new NextAction("turn in query quest", relevance), nullptr)));
+    
+    triggers.push_back(new TriggerNode("group list", NextAction::array(0, new NextAction("reset botAI", relevance), nullptr)));
     triggers.push_back(new TriggerNode("see spell", NextAction::array(0, new NextAction("see spell", relevance), nullptr)));
     triggers.push_back(new TriggerNode("release spirit", NextAction::array(0, new NextAction("release", relevance), nullptr)));
     triggers.push_back(new TriggerNode("revive from corpse", NextAction::array(0, new NextAction("revive from corpse", relevance), nullptr)));

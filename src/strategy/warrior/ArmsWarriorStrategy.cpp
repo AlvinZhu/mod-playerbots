@@ -32,7 +32,7 @@ ArmsWarriorStrategy::ArmsWarriorStrategy(PlayerbotAI* botAI) : GenericWarriorStr
 
 NextAction** ArmsWarriorStrategy::getDefaultActions()
 {
-    return NextAction::array(0, new NextAction("heroic strike", ACTION_NORMAL), nullptr);
+    return NextAction::array(0, new NextAction("heroic strike", ACTION_DEFAULT), nullptr);
 }
 
 void ArmsWarriorStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
@@ -54,5 +54,6 @@ void ArmsWarriorStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode("bloodrage", NextAction::array(0, new NextAction("bloodrage", ACTION_HIGH + 2), nullptr)));
     triggers.push_back(new TriggerNode("death wish", NextAction::array(0, new NextAction("death wish", ACTION_HIGH + 2), nullptr)));
     triggers.push_back(new TriggerNode("rend", NextAction::array(0, new NextAction("rend", ACTION_HIGH + 5), nullptr)));
+    triggers.push_back(new TriggerNode("rend on attacker", NextAction::array(0, new NextAction("rend on attacker", ACTION_HIGH + 5), nullptr)));
     triggers.push_back(new TriggerNode("critical health", NextAction::array(0, new NextAction("intimidating shout", ACTION_EMERGENCY), nullptr)));
 }

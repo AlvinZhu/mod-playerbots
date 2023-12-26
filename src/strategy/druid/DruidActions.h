@@ -17,10 +17,10 @@ class CastFaerieFireAction : public CastDebuffSpellAction
 		CastFaerieFireAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "faerie fire") { }
 };
 
-class CastFaerieFireFeralAction : public CastDebuffSpellAction
+class CastFaerieFireFeralAction : public CastSpellAction
 {
     public:
-        CastFaerieFireFeralAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "faerie fire (feral)") { }
+        CastFaerieFireFeralAction(PlayerbotAI* botAI) : CastSpellAction(botAI, "faerie fire (feral)") { }
 };
 
 class CastRejuvenationAction : public CastHealingSpellAction
@@ -75,6 +75,7 @@ class CastRebirthAction : public ResurrectPartyMemberAction
 		CastRebirthAction(PlayerbotAI* botAI) : ResurrectPartyMemberAction(botAI, "rebirth") { }
 
         NextAction** getPrerequisites() override;
+		bool isUseful() override;
 };
 
 class CastMarkOfTheWildAction : public CastBuffSpellAction
@@ -107,6 +108,12 @@ class CastThornsOnPartyAction : public BuffOnPartyAction
         CastThornsOnPartyAction(PlayerbotAI* botAI) : BuffOnPartyAction(botAI, "thorns") { }
 };
 
+class CastThornsOnMainTankAction : public BuffOnMainTankAction
+{
+    public:
+        CastThornsOnMainTankAction(PlayerbotAI* botAI) : BuffOnMainTankAction(botAI, "thorns", false) { }
+};
+
 class CastOmenOfClarityAction : public CastBuffSpellAction
 {
 	public:
@@ -129,18 +136,19 @@ class CastHurricaneAction : public CastSpellAction
 {
 	public:
 	    CastHurricaneAction(PlayerbotAI* botAI) : CastSpellAction(botAI, "hurricane") { }
+		ActionThreatType getThreatType() override { return ActionThreatType::Aoe; }
 };
 
 class CastMoonfireAction : public CastDebuffSpellAction
 {
 	public:
-		CastMoonfireAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "moonfire") { }
+		CastMoonfireAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "moonfire", true) { }
 };
 
 class CastInsectSwarmAction : public CastDebuffSpellAction
 {
 	public:
-		CastInsectSwarmAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "insect swarm") { }
+		CastInsectSwarmAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "insect swarm", true) { }
 };
 
 class CastStarfireAction : public CastSpellAction
@@ -234,6 +242,48 @@ class CastNaturesSwiftnessAction : public CastBuffSpellAction
 {
     public:
         CastNaturesSwiftnessAction(PlayerbotAI* botAI) : CastBuffSpellAction(botAI, "nature's swiftness") { }
+};
+
+class CastWildGrowthOnPartyAction : public HealPartyMemberAction
+{
+public:
+	CastWildGrowthOnPartyAction(PlayerbotAI* ai) : HealPartyMemberAction(ai, "wild growth") {}
+};
+
+class CastPartySwiftmendAction : public HealPartyMemberAction
+{
+public:
+	CastPartySwiftmendAction(PlayerbotAI* ai) : HealPartyMemberAction(ai, "swiftmend") {}
+};
+
+class CastPartyNourishAction : public HealPartyMemberAction
+{
+public:
+	CastPartyNourishAction(PlayerbotAI* ai) : HealPartyMemberAction(ai, "nourish") {}
+};
+
+class CastDruidRemoveCurseOnPartyAction : public CurePartyMemberAction
+{
+    public:
+        CastDruidRemoveCurseOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "remove curse", DISPEL_CURSE) {}
+};
+
+class CastInsectSwarmOnAttackerAction : public CastDebuffSpellOnAttackerAction
+{
+public:
+	CastInsectSwarmOnAttackerAction(PlayerbotAI* ai) : CastDebuffSpellOnAttackerAction(ai, "insect swarm") {}
+};
+
+class CastMoonfireOnAttackerAction : public CastDebuffSpellOnAttackerAction
+{
+public:
+	CastMoonfireOnAttackerAction(PlayerbotAI* ai) : CastDebuffSpellOnAttackerAction(ai, "moonfire") {}
+};
+
+class CastEnrageAction : public CastBuffSpellAction
+{
+public:
+	CastEnrageAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "enrage") {}
 };
 
 #endif

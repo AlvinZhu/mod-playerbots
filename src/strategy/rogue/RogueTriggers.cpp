@@ -6,10 +6,10 @@
 #include "Playerbots.h"
 #include "ServerFacade.h"
 
-bool AdrenalineRushTrigger::isPossible()
-{
-    return !botAI->HasAura("stealth", bot);
-}
+// bool AdrenalineRushTrigger::isPossible()
+// {
+//     return !botAI->HasAura("stealth", bot);
+// }
 
 bool UnstealthTrigger::IsActive()
 {
@@ -29,6 +29,9 @@ bool StealthTrigger::IsActive()
     float distance = 30.f;
 
     Unit* target = AI_VALUE(Unit*, "enemy player target");
+    if (target && !target->IsInWorld()) {
+        return false;
+    }
     if (!target)
         target = AI_VALUE(Unit*, "grind target");
 
@@ -76,6 +79,10 @@ bool SprintTrigger::IsActive()
 
     Unit* dps = AI_VALUE(Unit*, "dps target");
     Unit* enemyPlayer = AI_VALUE(Unit*, "enemy player target");
+
+    if (enemyPlayer && !enemyPlayer->IsInWorld()) {
+        return false;
+    }
     if (dps)
         targeted = (dps == AI_VALUE(Unit*, "current target"));
 
@@ -91,4 +98,22 @@ bool SprintTrigger::IsActive()
     return  AI_VALUE2(bool, "moving", "self target") && (AI_VALUE2(bool, "moving", "dps target") || AI_VALUE2(bool, "moving", "enemy player target")) &&
         targeted && (sServerFacade->IsDistanceGreaterThan(AI_VALUE2(float, "distance", "dps target"), distance) ||
             sServerFacade->IsDistanceGreaterThan(AI_VALUE2(float, "distance", "enemy player target"), distance));
+}
+
+bool ExposeArmorTrigger::IsActive() {
+    return DebuffTrigger::IsActive() && !botAI->HasAura("sunder armor", bot, false, false, -1, true) && AI_VALUE2(uint8, "combo", "current target") <= 3;
+}
+
+bool MainHandWeaponNoEnchantTrigger::IsActive() {
+    Item* const itemForSpell = bot->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND );
+    if (!itemForSpell || itemForSpell->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
+        return false;
+    return true;
+}
+
+bool OffHandWeaponNoEnchantTrigger::IsActive() {
+    Item* const itemForSpell = bot->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND );
+    if (!itemForSpell || itemForSpell->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
+        return false;
+    return true;
 }

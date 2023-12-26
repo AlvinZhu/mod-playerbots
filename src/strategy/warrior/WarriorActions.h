@@ -27,8 +27,15 @@ BUFF_ACTION(CastCommandingShoutAction, "commanding shout");
 // arms
 MELEE_ACTION(CastHeroicStrikeAction, "heroic strike");
 REACH_ACTION(CastChargeAction, "charge", 8.0f);
-DEBUFF_ACTION(CastRendAction, "rend");
-DEBUFF_ENEMY_ACTION(CastRendOnAttackerAction, "rend");
+DEBUFF_CHECKISOWNER_ACTION(CastRendAction, "rend");
+// DEBUFF_ENEMY_ACTION(CastRendOnAttackerAction, "rend");
+
+class CastRendOnAttackerAction : public CastDebuffSpellOnMeleeAttackerAction
+{
+    public:
+        CastRendOnAttackerAction(PlayerbotAI* botAI) : CastDebuffSpellOnMeleeAttackerAction(botAI, "rend") {}
+};
+
 DEBUFF_ACTION_R(CastThunderClapAction, "thunder clap", 8.0f);
 SNARE_ACTION(CastThunderClapSnareAction, "thunder clap");
 SNARE_ACTION(CastHamstringAction, "hamstring");

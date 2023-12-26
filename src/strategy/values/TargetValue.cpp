@@ -4,8 +4,11 @@
 
 #include "TargetValue.h"
 #include "LastMovementValue.h"
+#include "ObjectGuid.h"
 #include "RtiTargetValue.h"
 #include "Playerbots.h"
+#include "ScriptedCreature.h"
+#include "ThreatMgr.h"
 
 Unit* FindTargetStrategy::GetResult()
 {
@@ -110,4 +113,44 @@ WorldPosition LastLongMoveValue::Calculate()
 WorldPosition HomeBindValue::Calculate()
 {
     return WorldPosition(bot->m_homebindMapId, bot->m_homebindX, bot->m_homebindY, bot->m_homebindZ, 0.f);
+}
+
+Unit* FindTargetValue::Calculate()
+{
+    if (qualifier == "") {
+        return nullptr;
+    }
+    Group* group = bot->GetGroup();
+    if (!group) {
+        return nullptr;
+    }
+    HostileReference *ref = bot->getHostileRefMgr().getFirst();
+    while (ref)
+    {
+        ThreatMgr *threatManager = ref->GetSource();
+        Unit *unit = threatManager->GetOwner();
+        std::wstring wnamepart;
+        Utf8toWStr(unit->GetName(), wnamepart);
+        wstrToLower(wnamepart);
+        if (!qualifier.empty() && qualifier.length() == wnamepart.length() && Utf8FitTo(qualifier, wnamepart)) {
+            return unit;
+        }
+        ref = ref->next();
+    }
+    return nullptr;
+}
+
+void FindBossTargetStrategy::CheckAttacker(Unit* attacker, ThreatMgr* threatManager)
+{
+    UnitAI* unitAI = attacker->GetAI();
+    BossAI* bossAI = dynamic_cast<BossAI*>(unitAI);
+    if (bossAI) {
+        result = attacker;
+    }
+}
+
+Unit* BossTargetValue::Calculate()
+{
+    FindBossTargetStrategy strategy(botAI);
+    return FindTarget(&strategy);
 }
