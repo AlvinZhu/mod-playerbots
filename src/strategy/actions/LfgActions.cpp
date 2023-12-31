@@ -129,8 +129,8 @@ bool LfgJoinAction::JoinLFG()
     /*for (uint32 i = 0; i < sLFGDungeonStore.GetNumRows(); ++i)
     {
         LFGDungeonEntry const* dungeon = sLFGDungeonStore.LookupEntry(i);
-        if (!dungeon || (dungeon->TypeID != LFG_TYPE_RANDOM_DUNGEON && dungeon->TypeID != LFG_TYPE_DUNGEON && dungeon->TypeID != LFG_TYPE_HEROIC_DUNGEON &&
-            dungeon->TypeID != LFG_TYPE_RAID))
+        if (!dungeon || (dungeon->type != LFG_TYPE_RANDOM_DUNGEON && dungeon->type != LFG_TYPE_DUNGEON && dungeon->type != LFG_TYPE_HEROIC_DUNGEON &&
+            dungeon->type != LFG_TYPE_RAID))
             continue;
 
         uint32 botLevel = bot->getLevel();
@@ -146,10 +146,10 @@ bool LfgJoinAction::JoinLFG()
         if (heroic && !dungeon->difficulty)
             continue;
 
-        if (rbotAId && dungeon->TypeID != LFG_TYPE_RAID)
+        if (rbotAId && dungeon->type != LFG_TYPE_RAID)
             continue;
 
-        if (!random && !rbotAId && !heroic && dungeon->TypeID != LFG_TYPE_DUNGEON)
+        if (!random && !rbotAId && !heroic && dungeon->type != LFG_TYPE_DUNGEON)
             continue;
 
         list.insert(dungeon);
@@ -397,4 +397,3 @@ bool LfgJoinAction::isUseful()
 
     return true;
 }
-

@@ -281,7 +281,7 @@ ItemIds ChatHelper::parseItems(std::string const text)
 std::string const ChatHelper::FormatQuest(Quest const* quest)
 {
     std::ostringstream out;
-    out << "|cFFFFFF00|Hquest:" << quest->GetQuestId() << ':' << quest->GetQuestLevel() << "|h[" << quest->GetTitle() << "]|h|r";
+    out << "|cFFFFFF00|Hquest:" << quest->GetQuestId() << ':' << quest->GetQuestLevel() << "|h[" << quest->GetLocalizeTitle(LOCALE_zhCN) << "]|h|r";
     return out.str();
 }
 
@@ -327,7 +327,7 @@ std::string const ChatHelper::FormatWorldEntry(int32 entry)
 std::string const ChatHelper::FormatSpell(SpellInfo const* spellInfo)
 {
     std::ostringstream out;
-    out << "|cffffffff|Hspell:" << spellInfo->Id << "|h[" << spellInfo->SpellName[LOCALE_enUS] << "]|h|r";
+    out << "|cffffffff|Hspell:" << spellInfo->Id << "|h[" << spellInfo->SpellName[LOCALE_zhCN] << "]|h|r";
     return out.str();
 }
 
@@ -336,9 +336,12 @@ std::string const ChatHelper::FormatItem(ItemTemplate const* proto, uint32 count
     char color[32];
     sprintf(color, "%x", ItemQualityColors[proto->Quality]);
 
+    std::string itemName = proto->Name1;
+    if (ItemLocale const* il = sObjectMgr->GetItemLocale(proto->ItemId))
+        ObjectMgr::GetLocaleString(il->Name, LOCALE_zhCN, itemName);
     std::ostringstream out;
     out << "|c" << color << "|Hitem:" << proto->ItemId
-        << ":0:0:0:0:0:0:0" << "|h[" << proto->Name1
+        << ":0:0:0:0:0:0:0" << "|h[" << itemName
         << "]|h|r";
 
     if (count > 1)

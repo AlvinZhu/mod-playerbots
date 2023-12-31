@@ -14,7 +14,7 @@
 void TalkToQuestGiverAction::ProcessQuest(Quest const* quest, Object* questGiver)
 {
     std::ostringstream out;
-    out << "Quest ";
+    out << "任务 ";
 
     QuestStatus status = bot->GetQuestStatus(quest->GetQuestId());
     Player* master = GetMaster();
@@ -45,13 +45,13 @@ void TalkToQuestGiverAction::ProcessQuest(Quest const* quest, Object* questGiver
             TurnInQuest(quest, questGiver, out);
             break;
         case QUEST_STATUS_INCOMPLETE:
-            out << "|cffff0000Incompleted|r";
+            out << "|cffff0000未完成|r";
             break;
         case QUEST_STATUS_NONE:
-            out << "|cff00ff00Available|r";
+            out << "|cff00ff00可接受|r";
             break;
         case QUEST_STATUS_FAILED:
-            out << "|cffff0000Failed|r";
+            out << "|cffff0000失败|r";
             break;
     }
 
@@ -83,11 +83,11 @@ void TalkToQuestGiverAction::RewardNoItem(Quest const* quest, Object* questGiver
     if (bot->CanRewardQuest(quest, false))
     {
         bot->RewardQuest(quest, 0, questGiver, false);
-        out << "Completed";
+        out << "完成";
     }
     else
     {
-        out << "|cffff0000Unable to turn in|r";
+        out << "|cffff0000无法上交|r";
     }
 }
 
@@ -99,11 +99,11 @@ void TalkToQuestGiverAction::RewardSingleItem(Quest const* quest, Object* questG
     {
         bot->RewardQuest(quest, index, questGiver, true);
 
-        out << "Rewarded " << chat->FormatItem(item);
+        out << "已获取奖励 " << chat->FormatItem(item);
     }
     else
     {
-        out << "|cffff0000Unable to turn in:|r, reward: " << chat->FormatItem(item);
+        out << "|cffff0000无法上交:|r, 已获取奖励: " << chat->FormatItem(item);
     }
 }
 
@@ -150,11 +150,11 @@ void TalkToQuestGiverAction::RewardMultipleItem(Quest const* quest, Object* ques
         {
             ItemTemplate const* item = sObjectMgr->GetItemTemplate(quest->RewardChoiceItemId[*bestIds.begin()]);
             bot->RewardQuest(quest, *bestIds.begin(), questGiver, true);
-            out << "Rewarded " << ChatHelper::FormatItem(item);
+            out << "已获取奖励 " << ChatHelper::FormatItem(item);
         }
         else
         {
-            out << "Unable to find suitable reward. Asking for help....";
+            out << "找不到合适的奖励。寻求帮助....";
             AskToSelectReward(quest, out, true);
         }
 
@@ -178,7 +178,7 @@ void TalkToQuestGiverAction::RewardMultipleItem(Quest const* quest, Object* ques
             ItemTemplate const* item = sObjectMgr->GetItemTemplate(quest->RewardChoiceItemId[*bestIds.begin()]);
             bot->RewardQuest(quest, *bestIds.begin(), questGiver, true);
 
-            out << "Rewarded " << ChatHelper::FormatItem(item);
+            out << "已获取奖励 " << ChatHelper::FormatItem(item);
         }
     }
 }
@@ -186,7 +186,7 @@ void TalkToQuestGiverAction::RewardMultipleItem(Quest const* quest, Object* ques
 void TalkToQuestGiverAction::AskToSelectReward(Quest const* quest, std::ostringstream& out, bool forEquip)
 {
     std::ostringstream msg;
-    msg << "Choose reward: ";
+    msg << "选择奖励: ";
 
     for (uint8 i = 0; i < quest->GetRewChoiceItemsCount(); ++i)
     {
@@ -200,7 +200,7 @@ void TalkToQuestGiverAction::AskToSelectReward(Quest const* quest, std::ostrings
     }
 
     botAI->TellMaster(msg);
-    out << "Reward pending";
+    out << "奖励待定";
 }
 
 bool TurnInQueryQuestAction::Execute(Event event)
@@ -239,23 +239,23 @@ bool TurnInQueryQuestAction::Execute(Event event)
         }
     }
     std::ostringstream out;
-    out << "Quest ";
+    out << "任务 ";
     switch (status)
     {
         case QUEST_STATUS_COMPLETE:
             TurnInQuest(quest, object, out);
             break;
         case QUEST_STATUS_INCOMPLETE:
-            out << "|cffff0000Incompleted|r";
+            out << "|cffff0000未完成|r";
             break;
         case QUEST_STATUS_NONE:
-            out << "|cff00ff00Available|r";
+            out << "|cff00ff00可接受|r";
             break;
         case QUEST_STATUS_FAILED:
-            out << "|cffff0000Failed|r";
+            out << "|cffff0000失败|r";
             break;
         case QUEST_STATUS_REWARDED:
-            out << "|cffff0000Rewarded|r";
+            out << "|cffff0000已获取奖励|r";
             break;
     }
 
