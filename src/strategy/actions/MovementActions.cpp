@@ -166,11 +166,11 @@ bool MovementAction::MoveTo(uint32 mapId, float x, float y, float z, bool idle, 
                 !bot->IsFlying() && !bot->HasUnitMovementFlag(MOVEMENTFLAG_SWIMMING) && !bot->IsInWater();
         MotionMaster &mm = *bot->GetMotionMaster();
         
-        mm.Clear();
-        float modifiedZ = SearchBestGroundZForPath(x, y, z, generatePath, normal_only);
+        float modifiedZ = SearchBestGroundZForPath(x, y, z, generatePath, 20.0f, normal_only);
         if (modifiedZ == INVALID_HEIGHT) {
             return false;
         }
+        // mm.Clear();
         mm.MovePoint(mapId, x, y, modifiedZ, generatePath);
         AI_VALUE(LastMovement&, "last movement").Set(mapId, x, y, z, bot->GetOrientation());
         return true;
@@ -1055,7 +1055,8 @@ float MovementAction::MoveDelay(float distance)
 
 void MovementAction::WaitForReach(float distance)
 {
-    float delay = 1000.0f * MoveDelay(distance) + sPlayerbotAIConfig->reactDelay;
+    float delay = 1000.0f * MoveDelay(distance);
+
     if (delay > sPlayerbotAIConfig->maxWaitForMove)
         delay = sPlayerbotAIConfig->maxWaitForMove;
 
@@ -1289,41 +1290,58 @@ bool MovementAction::MoveInside(uint32 mapId, float x, float y, float z, float d
     return MoveNear(mapId, x, y, z, distance);
 }
 
-float MovementAction::SearchBestGroundZForPath(float x, float y, float z, bool generatePath, float range, bool normal_only)
+float MovementAction::SearchBestGroundZForPath(float x, float y, float z, bool generatePath, float range, bool normal_only, float step)
 {
     if (!generatePath) {
         return z;
     }
+    float min_length = 100000.0f;
+    float current_z = INVALID_HEIGHT;
     float modified_z;
     float delta;
-    for (delta = 0.0f; delta <= range / 2; delta++) {
+    for (delta = 0.0f; delta <= range / 2; delta += step) {
         modified_z = bot->GetMapWaterOrGroundLevel(x, y, z + delta);
         PathGenerator gen(bot);
         gen.CalculatePath(x, y, modified_z);
-        if (gen.GetPathType() == PATHFIND_NORMAL) {
-            return modified_z;
+        if (gen.GetPathType() == PATHFIND_NORMAL && gen.getPathLength() < min_length) {
+            min_length = gen.getPathLength();
+            current_z = modified_z;
+            if (abs(current_z - z) < 0.5f) {
+                return current_z;
+            }
         }
     }
-    for (delta = -1.0f; delta >= -range / 2; delta--) {
+    for (delta = -step; delta >= -range / 2; delta -= step) {
         modified_z = bot->GetMapWaterOrGroundLevel(x, y, z + delta);
         PathGenerator gen(bot);
         gen.CalculatePath(x, y, modified_z);
-        if (gen.GetPathType() == PATHFIND_NORMAL) {
-            return modified_z;
+        if (gen.GetPathType() == PATHFIND_NORMAL && gen.getPathLength() < min_length) {
+            min_length = gen.getPathLength();
+            current_z = modified_z;
+            if (abs(current_z - z) < 0.5f) {
+                return current_z;
+            }
         }
     }
-    for (delta = range / 2 + 1.0f; delta <= range; delta++) {
+    for (delta = range / 2 + step; delta <= range; delta += 2) {
         modified_z = bot->GetMapWaterOrGroundLevel(x, y, z + delta);
         PathGenerator gen(bot);
         gen.CalculatePath(x, y, modified_z);
-        if (gen.GetPathType() == PATHFIND_NORMAL) {
-            return modified_z;
+        if (gen.GetPathType() == PATHFIND_NORMAL && gen.getPathLength() < min_length) {
+            min_length = gen.getPathLength();
+            current_z = modified_z;
+            if (abs(current_z - z) < 0.5f) {
+                return current_z;
+            }
         }
     }
-    if (normal_only) {
+    if (current_z == INVALID_HEIGHT && normal_only) {
         return INVALID_HEIGHT;
     }
-    return z;
+    if (current_z == INVALID_HEIGHT && !normal_only) {
+        return z;
+    }
+    return current_z;
 }
     
 
@@ -1395,7 +1413,7 @@ bool SetFacingTargetAction::Execute(Event event)
         return true;
 
     sServerFacade->SetFacingTo(bot, target);
-    botAI->SetNextCheckDelay(sPlayerbotAIConfig->globalCoolDown);
+    botAI->SetNextCheckDelay(sPlayerbotAIConfig->reactDelay);
     return true;
 }
 
@@ -1481,7 +1499,7 @@ bool MoveRandomAction::Execute(Event event)
         if (map->IsInWater(bot->GetPhaseMask(), x, y, z, bot->GetCollisionHeight()))
             continue;
 
-        bool moved = MoveTo(bot->GetMapId(), x, y, z, false, false, true);
+        bool moved = MoveTo(bot->GetMapId(), x, y, z);
         if (moved)
             return true;
     }

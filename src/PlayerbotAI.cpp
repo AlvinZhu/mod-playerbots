@@ -1372,6 +1372,11 @@ bool PlayerbotAI::IsRanged(Player* player)
     return true;
 }
 
+bool PlayerbotAI::IsCaster(Player* player)
+{
+    return IsRanged(player) && player->getClass() != CLASS_HUNTER;
+}
+
 bool PlayerbotAI::IsRangedDps(Player* player)
 {
     return IsRanged(player) && IsDps(player);
@@ -2435,7 +2440,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target, Item* itemTarget)
 
     if (failWithDelay)
     {
-        SetNextCheckDelay(sPlayerbotAIConfig->globalCoolDown);
+        SetNextCheckDelay(sPlayerbotAIConfig->reactDelay);
         // if (!sPlayerbotAIConfig->logInGroupOnly || (bot->GetGroup() && HasRealPlayerMaster())) {
         //     LOG_DEBUG("playerbots", "Spell cast fail with delay - target name: {}, spellid: {}, bot name: {}", 
         //         target->GetName(), spellId, bot->GetName());
@@ -2502,7 +2507,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target, Item* itemTarget)
     if (bot->isMoving() && spell->GetCastTime())
     {
         // bot->StopMoving();
-        SetNextCheckDelay(sPlayerbotAIConfig->globalCoolDown);
+        SetNextCheckDelay(sPlayerbotAIConfig->reactDelay);
         spell->cancel();
         delete spell;
         return false;
@@ -2656,7 +2661,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, float x, float y, float z, Item* ite
     if (bot->isMoving() && spell->GetCastTime())
     {
         // bot->StopMoving();
-        SetNextCheckDelay(sPlayerbotAIConfig->globalCoolDown);
+        SetNextCheckDelay(sPlayerbotAIConfig->reactDelay);
         spell->cancel();
         delete spell;
         return false;
@@ -2842,7 +2847,7 @@ bool PlayerbotAI::CastVehicleSpell(uint32 spellId, Unit* target)
 
     if (failWithDelay)
     {
-        SetNextCheckDelay(sPlayerbotAIConfig->globalCoolDown);
+        SetNextCheckDelay(sPlayerbotAIConfig->reactDelay);
         return false;
     }
 
